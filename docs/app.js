@@ -97,8 +97,9 @@ function render() {
 }
 
 function renderPredict() {
-  const now = new Date().toISOString();
-  const upcoming = matches.filter(m => m.datetime > now && (m.status === "SCHEDULED" || m.status === "TIMED"));
+  const now = new Date();
+  const cutoff = new Date(now.getTime() + 96 * 60 * 60 * 1000).toISOString();
+  const upcoming = matches.filter(m => m.datetime > now.toISOString() && m.datetime <= cutoff && (m.status === "SCHEDULED" || m.status === "TIMED"));
   const container = document.getElementById("matches-list");
 
   if (!upcoming.length) { container.innerHTML = "<p>No upcoming matches to predict.</p>"; return; }
@@ -107,7 +108,7 @@ function renderPredict() {
     const existing = predictions.find(p => p.user === currentUser && p.match_id === m.id);
     const hVal = existing ? existing.home_score : "";
     const aVal = existing ? existing.away_score : "";
-    const dt = new Date(m.datetime).toLocaleString();
+    const dt = new Date(m.datetime).toLocaleString([], { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
     return `<div class="match-card" data-id="${m.id}">
       <span class="team">${m.home_team}</span>
       <div class="score-inputs">
