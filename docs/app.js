@@ -1,5 +1,20 @@
 const REPO = "ImmanuelJoseph7/wc-prediction";
 const IS_LOCAL = location.hostname === "localhost" || location.hostname === "127.0.0.1";
+
+const FLAGS = {
+  "Algeria":"🇩🇿","Argentina":"🇦🇷","Australia":"🇦🇺","Austria":"🇦🇹","Belgium":"🇧🇪",
+  "Bosnia-Herzegovina":"🇧🇦","Brazil":"🇧🇷","Canada":"🇨🇦","Cape Verde Islands":"🇨🇻",
+  "Colombia":"🇨🇴","Congo DR":"🇨🇩","Croatia":"🇭🇷","Curaçao":"🇨🇼","Czechia":"🇨🇿",
+  "Ecuador":"🇪🇨","Egypt":"🇪🇬","England":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","France":"🇫🇷","Germany":"🇩🇪",
+  "Ghana":"🇬🇭","Haiti":"🇭🇹","Iran":"🇮🇷","Iraq":"🇮🇶","Ivory Coast":"🇨🇮",
+  "Japan":"🇯🇵","Jordan":"🇯🇴","Mexico":"🇲🇽","Morocco":"🇲🇦","Netherlands":"🇳🇱",
+  "New Zealand":"🇳🇿","Norway":"🇳🇴","Panama":"🇵🇦","Paraguay":"🇵🇾","Portugal":"🇵🇹",
+  "Qatar":"🇶🇦","Saudi Arabia":"🇸🇦","Scotland":"🏴󠁧󠁢󠁳󠁣󠁴󠁿","Senegal":"🇸🇳",
+  "South Africa":"🇿🇦","South Korea":"🇰🇷","Spain":"🇪🇸","Sweden":"🇸🇪",
+  "Switzerland":"🇨🇭","Tunisia":"🇹🇳","Turkey":"🇹🇷","United States":"🇺🇸",
+  "Uruguay":"🇺🇾","Uzbekistan":"🇺🇿"
+};
+const flag = (team) => FLAGS[team] || "";
 const DATA_BASE = IS_LOCAL ? "/data" : `https://raw.githubusercontent.com/${REPO}/main/data`;
 const API_BASE = `https://api.github.com/repos/${REPO}/actions/workflows/submit-prediction.yml/dispatches`;
 
@@ -110,13 +125,13 @@ function renderPredict() {
     const aVal = existing ? existing.away_score : "";
     const dt = new Date(m.datetime).toLocaleString([], { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
     return `<div class="match-card" data-id="${m.id}">
-      <span class="team">${m.home_team}</span>
+      <span class="team">${flag(m.home_team)} ${m.home_team}</span>
       <div class="score-inputs">
         <input type="number" min="0" max="20" class="home-score" value="${hVal}">
         <span>–</span>
         <input type="number" min="0" max="20" class="away-score" value="${aVal}">
       </div>
-      <span class="team">${m.away_team}</span>
+      <span class="team">${m.away_team} ${flag(m.away_team)}</span>
       <span class="meta">${m.group || m.stage} · ${dt}</span>
     </div>`;
   }).join("");
@@ -137,14 +152,14 @@ function renderLeaderboard() {
   breakdown.innerHTML = finished.map(m => {
     const preds = predictions.filter(p => p.match_id === m.id);
     const rows = preds.map(p => `<li>${p.user}: ${p.home_score}-${p.away_score}</li>`).join("");
-    return `<details><summary>${m.home_team} ${m.home_score}–${m.away_score} ${m.away_team}</summary><ul>${rows}</ul></details>`;
+    return `<details><summary>${flag(m.home_team)} ${m.home_team} ${m.home_score}–${m.away_score} ${m.away_team} ${flag(m.away_team)}</summary><ul>${rows}</ul></details>`;
   }).join("");
 }
 
 function renderResults() {
   const finished = matches.filter(m => m.status === "FINISHED").sort((a, b) => b.datetime.localeCompare(a.datetime));
   document.getElementById("results-list").innerHTML = finished.map(m =>
-    `<div class="result-card"><span>${m.home_team}</span><span class="score">${m.home_score} – ${m.away_score}</span><span>${m.away_team}</span></div>`
+    `<div class="result-card"><span>${flag(m.home_team)} ${m.home_team}</span><span class="score">${m.home_score} – ${m.away_score}</span><span>${m.away_team} ${flag(m.away_team)}</span></div>`
   ).join("") || "<p>No results yet.</p>";
 }
 
