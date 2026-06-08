@@ -1,0 +1,48 @@
+name: Register User
+
+on:
+  workflow_dispatch:
+    inputs:
+      user:
+        description: "User name"
+        required: true
+        type: string
+      pin_hash:
+        description: "SHA-256 hash of PIN"
+        required: true
+        type: string
+
+jobs:
+  register:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Register user
+        run: |
+          python -c "
+          import json, sys
+          from datetime import datetime, timezone
+
+          user = '${{ github.event.inputs.user }}'
+          pin_hash = '${{ github.event.inputs.pin_hash }}'
+
+          with open('data/users.json') as f:
+              users = json.load(f)
+
+          if any(u['name'] == user for u in users):
+              print(f'{user} already registered'); sys.exit(0)
+
+          users.append({'name': user, 'pin_hash': pin_hash, 'created_at': datetime.now(timezone.utc).isoformat()})
+
+          with open('data/users.json', 'w') as f:
+              json.dump(users, f, indent=2)
+          print(f'Registered {user}.')
+          "
+
+      - name: Commit & push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/users.json
+          git diff --staged --quiet || (git commit -m "Register: ${{ github.event.inputs.user }}" && git push)

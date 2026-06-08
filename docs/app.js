@@ -56,6 +56,19 @@ document.getElementById("login-btn").onclick = async () => {
   if (existing) {
     if (existing.pin_hash !== hash) { err.textContent = "Wrong PIN."; return; }
   } else {
+    // Register new user via GitHub Action
+    let pat = localStorage.getItem("wc_pat");
+    if (!pat) {
+      pat = prompt("One-time setup: enter the family GitHub token (ask Dad):");
+      if (!pat) { err.textContent = "Cancelled."; return; }
+      localStorage.setItem("wc_pat", pat);
+    }
+    const regResp = await fetch(`https://api.github.com/repos/${REPO}/actions/workflows/register-user.yml/dispatches`, {
+      method: "POST",
+      headers: { Authorization: `token ${pat}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ ref: "main", inputs: { user: name, pin_hash: hash } }),
+    });
+    if (regResp.status !== 204) { err.textContent = "Registration failed. Check token."; return; }
     users.push({ name, pin_hash: hash, created_at: new Date().toISOString() });
   }
 

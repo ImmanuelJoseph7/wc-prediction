@@ -1,6 +1,1 @@
-[
-  {"id": 1, "home_team": "Mexico", "away_team": "Canada", "group": "GROUP_A", "stage": "GROUP_STAGE", "datetime": "2026-06-11T18:00:00Z", "status": "FINISHED", "home_score": 2, "away_score": 1},
-  {"id": 2, "home_team": "Brazil", "away_team": "Germany", "group": "GROUP_B", "stage": "GROUP_STAGE", "datetime": "2026-06-11T20:00:00Z", "status": "FINISHED", "home_score": 1, "away_score": 1},
-  {"id": 3, "home_team": "Argentina", "away_team": "France", "group": "GROUP_C", "stage": "GROUP_STAGE", "datetime": "2026-06-12T18:00:00Z", "status": "SCHEDULED", "home_score": null, "away_score": null},
-  {"id": 4, "home_team": "England", "away_team": "Spain", "group": "GROUP_D", "stage": "GROUP_STAGE", "datetime": "2026-06-12T20:00:00Z", "status": "SCHEDULED", "home_score": null, "away_score": null}
-]
+[]
