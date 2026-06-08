@@ -98,7 +98,7 @@ function render() {
 
 function renderPredict() {
   const now = new Date().toISOString();
-  const upcoming = matches.filter(m => m.datetime > now && m.status === "SCHEDULED");
+  const upcoming = matches.filter(m => m.datetime > now && (m.status === "SCHEDULED" || m.status === "TIMED"));
   const container = document.getElementById("matches-list");
 
   if (!upcoming.length) { container.innerHTML = "<p>No upcoming matches to predict.</p>"; return; }
