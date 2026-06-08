@@ -1,0 +1,89 @@
+name: Submit Prediction
+
+on:
+  workflow_dispatch:
+    inputs:
+      user:
+        description: "User name"
+        required: true
+        type: string
+      pin:
+        description: "User PIN"
+        required: true
+        type: string
+      predictions:
+        description: "JSON array of predictions"
+        required: true
+        type: string
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install -r requirements.txt
+
+      - name: Process prediction
+        run: |
+          python -c "
+          import json, hashlib, sys
+          from datetime import datetime, timezone
+
+          user = '${{ github.event.inputs.user }}'
+          pin = '${{ github.event.inputs.pin }}'
+          preds_raw = '''${{ github.event.inputs.predictions }}'''
+
+          # Validate PIN
+          with open('data/users.json') as f:
+              users = json.load(f)
+          user_rec = next((u for u in users if u['name'] == user), None)
+          if not user_rec:
+              print(f'User {user} not found'); sys.exit(1)
+          pin_hash = hashlib.sha256(pin.encode()).hexdigest()
+          if user_rec['pin_hash'] != pin_hash:
+              print('Invalid PIN'); sys.exit(1)
+
+          # Validate match times
+          with open('data/matches.json') as f:
+              matches = {m['id']: m for m in json.load(f)}
+          now = datetime.now(timezone.utc).isoformat()
+          new_preds = json.loads(preds_raw)
+          for p in new_preds:
+              m = matches.get(p['match_id'])
+              if not m:
+                  print(f\"Match {p['match_id']} not found\"); sys.exit(1)
+              if m['datetime'] <= now:
+                  print(f\"Match {p['match_id']} already started\"); sys.exit(1)
+
+          # Merge predictions
+          with open('data/predictions.json') as f:
+              all_preds = json.load(f)
+          # Remove existing predictions for same user+match
+          existing_keys = {(p['match_id']) for p in new_preds}
+          all_preds = [p for p in all_preds if not (p['user'] == user and p['match_id'] in existing_keys)]
+          for p in new_preds:
+              all_preds.append({
+                  'user': user,
+                  'match_id': p['match_id'],
+                  'home_score': p['home_score'],
+                  'away_score': p['away_score'],
+                  'submitted_at': datetime.now(timezone.utc).isoformat()
+              })
+          with open('data/predictions.json', 'w') as f:
+              json.dump(all_preds, f, indent=2)
+          print(f'Saved {len(new_preds)} predictions for {user}.')
+          "
+
+      - run: python scripts/calculate.py
+
+      - name: Commit & push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/
+          git diff --staged --quiet || (git commit -m "Prediction: ${{ github.event.inputs.user }}" && git push)

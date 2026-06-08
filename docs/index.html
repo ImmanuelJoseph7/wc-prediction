@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Family WC Predictor 2026</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="container">
+    <h1>⚽ Family WC Predictor</h1>
+    <nav>
+      <button class="tab active" data-tab="predict">Predict</button>
+      <button class="tab" data-tab="leaderboard">Leaderboard</button>
+      <button class="tab" data-tab="results">Results</button>
+    </nav>
+
+    <!-- Login overlay -->
+    <dialog id="login-dialog" open>
+      <article>
+        <h2>Who are you?</h2>
+        <select id="user-select">
+          <option value="">Pick your name…</option>
+          <option>Dad</option>
+          <option>Mum</option>
+          <option>Boy</option>
+          <option>Girl</option>
+        </select>
+        <input type="password" id="pin-input" placeholder="4-digit PIN" maxlength="4" pattern="\d{4}">
+        <button id="login-btn">Enter</button>
+        <small id="login-error" class="error"></small>
+      </article>
+    </dialog>
+
+    <!-- Predict tab -->
+    <section id="tab-predict" class="tab-content">
+      <h2>Upcoming Matches</h2>
+      <div id="matches-list"></div>
+      <button id="submit-preds" class="submit-btn" disabled>Submit Predictions</button>
+      <small id="submit-status"></small>
+    </section>
+
+    <!-- Leaderboard tab -->
+    <section id="tab-leaderboard" class="tab-content hidden">
+      <h2>Leaderboard</h2>
+      <table id="leaderboard-table">
+        <thead><tr><th>#</th><th>Name</th><th>Points</th><th>🎯 Exact</th><th>✓ Correct</th><th>Played</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <h3>Match Breakdown</h3>
+      <div id="breakdown"></div>
+    </section>
+
+    <!-- Results tab -->
+    <section id="tab-results" class="tab-content hidden">
+      <h2>Completed Matches</h2>
+      <div id="results-list"></div>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
