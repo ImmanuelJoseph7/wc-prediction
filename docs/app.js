@@ -2,19 +2,22 @@ const REPO = "ImmanuelJoseph7/wc-prediction";
 const IS_LOCAL = location.hostname === "localhost" || location.hostname === "127.0.0.1";
 
 const FLAGS = {
-  "Algeria":"🇩🇿","Argentina":"🇦🇷","Australia":"🇦🇺","Austria":"🇦🇹","Belgium":"🇧🇪",
-  "Bosnia-Herzegovina":"🇧🇦","Brazil":"🇧🇷","Canada":"🇨🇦","Cape Verde Islands":"🇨🇻",
-  "Colombia":"🇨🇴","Congo DR":"🇨🇩","Croatia":"🇭🇷","Curaçao":"🇨🇼","Czechia":"🇨🇿",
-  "Ecuador":"🇪🇨","Egypt":"🇪🇬","England":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","France":"🇫🇷","Germany":"🇩🇪",
-  "Ghana":"🇬🇭","Haiti":"🇭🇹","Iran":"🇮🇷","Iraq":"🇮🇶","Ivory Coast":"🇨🇮",
-  "Japan":"🇯🇵","Jordan":"🇯🇴","Mexico":"🇲🇽","Morocco":"🇲🇦","Netherlands":"🇳🇱",
-  "New Zealand":"🇳🇿","Norway":"🇳🇴","Panama":"🇵🇦","Paraguay":"🇵🇾","Portugal":"🇵🇹",
-  "Qatar":"🇶🇦","Saudi Arabia":"🇸🇦","Scotland":"🏴󠁧󠁢󠁳󠁣󠁴󠁿","Senegal":"🇸🇳",
-  "South Africa":"🇿🇦","South Korea":"🇰🇷","Spain":"🇪🇸","Sweden":"🇸🇪",
-  "Switzerland":"🇨🇭","Tunisia":"🇹🇳","Turkey":"🇹🇷","United States":"🇺🇸",
-  "Uruguay":"🇺🇾","Uzbekistan":"🇺🇿"
+  "Algeria":"dz","Argentina":"ar","Australia":"au","Austria":"at","Belgium":"be",
+  "Bosnia-Herzegovina":"ba","Brazil":"br","Canada":"ca","Cape Verde Islands":"cv",
+  "Colombia":"co","Congo DR":"cd","Croatia":"hr","Curaçao":"cw","Czechia":"cz",
+  "Ecuador":"ec","Egypt":"eg","England":"gb-eng","France":"fr","Germany":"de",
+  "Ghana":"gh","Haiti":"ht","Iran":"ir","Iraq":"iq","Ivory Coast":"ci",
+  "Japan":"jp","Jordan":"jo","Mexico":"mx","Morocco":"ma","Netherlands":"nl",
+  "New Zealand":"nz","Norway":"no","Panama":"pa","Paraguay":"py","Portugal":"pt",
+  "Qatar":"qa","Saudi Arabia":"sa","Scotland":"gb-sct","Senegal":"sn",
+  "South Africa":"za","South Korea":"kr","Spain":"es","Sweden":"se",
+  "Switzerland":"ch","Tunisia":"tn","Turkey":"tr","United States":"us",
+  "Uruguay":"uy","Uzbekistan":"uz"
 };
-const flag = (team) => FLAGS[team] || "";
+const flag = (team) => {
+  const code = FLAGS[team];
+  return code ? `<img src="https://flagcdn.com/24x18/${code}.png" alt="${team}" style="vertical-align:middle;margin:0 4px">` : "";
+};
 const DATA_BASE = IS_LOCAL ? "/data" : `https://raw.githubusercontent.com/${REPO}/main/data`;
 const API_BASE = `https://api.github.com/repos/${REPO}/actions/workflows/submit-prediction.yml/dispatches`;
 
