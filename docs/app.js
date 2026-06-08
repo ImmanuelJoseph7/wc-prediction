@@ -5,7 +5,7 @@ const API_BASE = `https://api.github.com/repos/${REPO}/actions/workflows/submit-
 
 function dataUrl(file) {
   if (IS_LOCAL) return `/data/${file}`;
-  return `https://raw.githubusercontent.com/${REPO}/main/data/${file}?t=${Date.now()}`;
+  return `https://api.github.com/repos/${REPO}/contents/data/${file}`;
 }
 
 let currentUser = sessionStorage.getItem("wc_user");
@@ -26,11 +26,17 @@ let users = [];
 
 // Data fetching
 async function loadData() {
+  const fetchJson = (file) => {
+    if (IS_LOCAL) return fetch(`/data/${file}`).then(r => r.json());
+    return fetch(`https://api.github.com/repos/${REPO}/contents/data/${file}`, {
+      headers: { Accept: "application/vnd.github.v3.raw" }
+    }).then(r => r.json());
+  };
   [matches, predictions, leaderboard, users] = await Promise.all([
-    fetch(dataUrl("matches.json")).then(r => r.json()),
-    fetch(dataUrl("predictions.json")).then(r => r.json()),
-    fetch(dataUrl("leaderboard.json")).then(r => r.json()),
-    fetch(dataUrl("users.json")).then(r => r.json()),
+    fetchJson("matches.json"),
+    fetchJson("predictions.json"),
+    fetchJson("leaderboard.json"),
+    fetchJson("users.json"),
   ]);
   if (IS_LOCAL) {
     const localPreds = JSON.parse(localStorage.getItem("wc_local_preds") || "[]");
