@@ -1,7 +1,7 @@
 """Calculate points and generate leaderboard.json from matches and predictions."""
 import json
 
-USERS = ["Dad", "Mum", "Boy", "Girl"]
+USERS = ["IJ", "SG", "TT"]
 
 
 def outcome(home, away):
