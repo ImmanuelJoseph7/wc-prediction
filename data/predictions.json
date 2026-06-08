@@ -1,1 +1,16 @@
-[]
+[
+  {
+    "user": "SG",
+    "match_id": 537327,
+    "home_score": 2,
+    "away_score": 1,
+    "submitted_at": "2026-06-08T11:35:59.526070+00:00"
+  },
+  {
+    "user": "SG",
+    "match_id": 537328,
+    "home_score": 1,
+    "away_score": 1,
+    "submitted_at": "2026-06-08T11:35:59.526075+00:00"
+  }
+]
