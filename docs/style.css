@@ -116,6 +116,7 @@ nav {
 }
 
 .error { color: #d32f2f; }
+.success { color: #2E7D32; }
 
 #leaderboard-table {
   width: 100%;
@@ -170,6 +171,46 @@ dialog article {
   margin: auto;
 }
 
+dialog article input,
+dialog article select,
+dialog article button {
+  margin-bottom: 0.6rem;
+}
+
+dialog article hr {
+  margin: 1rem 0 0.8rem;
+  border-color: #eee;
+}
+
+#register-section {
+  padding: 0.5rem 0 0;
+  box-shadow: none;
+  margin: 0;
+}
+
+#register-section summary {
+  font-size: 0.9rem;
+  color: var(--accent);
+}
+
+#register-section small {
+  display: block;
+  margin-bottom: 0.6rem;
+  color: #666;
+  line-height: 1.4;
+}
+
+#register-section input,
+#register-section button {
+  margin-bottom: 0.5rem;
+}
+
+#register-btn {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
 dialog select,
 dialog input {
   background: #fff;
@@ -178,7 +219,7 @@ dialog input {
   border-radius: 6px;
 }
 
-details {
+#breakdown details {
   background: var(--card-bg);
   border-radius: 8px;
   padding: 0.6rem 1rem;
@@ -186,7 +227,7 @@ details {
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
 
-details summary {
+#breakdown details summary {
   font-weight: 600;
   cursor: pointer;
 }

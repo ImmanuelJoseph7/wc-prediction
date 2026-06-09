@@ -1,8 +1,6 @@
 """Calculate points and generate leaderboard.json from matches and predictions."""
 import json
 
-USERS = ["IJ", "SG", "TT"]
-
 
 def outcome(home, away):
     if home > away:
@@ -25,6 +23,8 @@ def main():
         matches = {m["id"]: m for m in json.load(f)}
     with open("data/predictions.json") as f:
         predictions = json.load(f)
+    with open("data/users.json") as f:
+        USERS = [u["name"] for u in json.load(f)]
 
     leaderboard = []
     for user in USERS:

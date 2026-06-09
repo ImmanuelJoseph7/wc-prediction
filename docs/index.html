@@ -22,13 +22,21 @@
         <h2>Who are you?</h2>
         <select id="user-select">
           <option value="">Pick your name…</option>
-          <option>IJ</option>
-          <option>SG</option>
-          <option>TT</option>
         </select>
         <input type="password" id="pin-input" placeholder="4-digit PIN" maxlength="4" pattern="\d{4}">
         <button id="login-btn">Enter</button>
         <small id="login-error" class="error"></small>
+        <hr>
+        <details id="register-section">
+          <summary>New player? Register here</summary>
+          <small>Name: First Name + Last Initial (e.g. "Samuel G")<br>PIN: 4 digits</small>
+          <input type="text" id="reg-name" placeholder="First Name + Last Initial" maxlength="20">
+          <input type="password" id="reg-pin" placeholder="4-digit PIN" maxlength="4" pattern="\d{4}">
+          <input type="password" id="reg-pin-confirm" placeholder="Confirm PIN" maxlength="4" pattern="\d{4}">
+          <button id="register-btn">Register</button>
+          <small id="reg-error" class="error"></small>
+          <small id="reg-success" class="success"></small>
+        </details>
       </article>
     </dialog>
 

@@ -33,12 +33,29 @@ let predictions = [];
 let leaderboard = [];
 let users = [];
 
+// Populate user select from users.json
+async function populateUserSelect() {
+  const fetchJson = (file) => {
+    if (IS_LOCAL) return fetch(`/data/${file}`).then(r => r.json());
+    return fetch(`https://api.github.com/repos/${REPO}/contents/data/${file}`, {
+      headers: { Accept: "application/vnd.github.v3.raw" }
+    }).then(r => r.json());
+  };
+  const u = await fetchJson("users.json");
+  const sel = document.getElementById("user-select");
+  sel.innerHTML = '<option value="">Pick your name…</option>';
+  u.forEach(user => { sel.innerHTML += `<option>${user.name}</option>`; });
+  users = u;
+}
+
 // Auto-login if session exists
 (async () => {
   if (currentUser && currentPin) {
     await loadData();
     document.getElementById("login-dialog").close();
     render();
+  } else {
+    await populateUserSelect();
   }
 })();
 
@@ -95,6 +112,52 @@ document.getElementById("login-btn").onclick = async () => {
   sessionStorage.setItem("wc_pin", pin);
   document.getElementById("login-dialog").close();
   render();
+};
+
+// Registration
+document.getElementById("register-btn").onclick = async () => {
+  const name = document.getElementById("reg-name").value.trim();
+  const pin = document.getElementById("reg-pin").value;
+  const confirm = document.getElementById("reg-pin-confirm").value;
+  const err = document.getElementById("reg-error");
+  const success = document.getElementById("reg-success");
+  err.textContent = ""; success.textContent = "";
+
+  if (!/^[A-Z][a-z]+ [A-Z]$/.test(name)) { err.textContent = "Format: First Name + Last Initial (e.g. Samuel G)"; return; }
+  if (!/^\d{4}$/.test(pin)) { err.textContent = "PIN must be exactly 4 digits."; return; }
+  if (pin !== confirm) { err.textContent = "PINs don't match."; return; }
+  if (users.find(u => u.name === name)) { err.textContent = "Name already taken."; return; }
+
+  const hash = await hashPin(pin);
+
+  if (IS_LOCAL) {
+    users.push({ name, pin_hash: hash, created_at: new Date().toISOString() });
+    success.textContent = "✓ Registered! Select your name above to login.";
+    await populateUserSelect();
+    return;
+  }
+
+  let pat = localStorage.getItem("wc_pat");
+  if (!pat) {
+    pat = prompt("One-time setup: enter the family GitHub token (ask Dad):");
+    if (!pat) { err.textContent = "Cancelled."; return; }
+    localStorage.setItem("wc_pat", pat);
+  }
+
+  try {
+    const resp = await fetch(`https://api.github.com/repos/${REPO}/actions/workflows/register-user.yml/dispatches`, {
+      method: "POST",
+      headers: { Authorization: `token ${pat}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ ref: "main", inputs: { user: name, pin_hash: hash } }),
+    });
+    if (resp.status === 204) {
+      success.textContent = "✓ Registered! Wait ~30s then refresh to login.";
+    } else {
+      err.textContent = `Error: ${resp.status}`;
+    }
+  } catch (e) {
+    err.textContent = `Failed: ${e.message}`;
+  }
 };
 
 // Tabs
