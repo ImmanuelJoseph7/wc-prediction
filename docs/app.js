@@ -139,7 +139,7 @@ document.getElementById("register-btn").onclick = async () => {
 
   let pat = localStorage.getItem("wc_pat");
   if (!pat) {
-    pat = prompt("One-time setup: enter the family GitHub token (ask Dad):");
+    pat = prompt("One-time setup: enter the family GitHub token (ask Immanuel):");
     if (!pat) { err.textContent = "Cancelled."; return; }
     localStorage.setItem("wc_pat", pat);
   }
@@ -262,7 +262,7 @@ document.getElementById("submit-preds").onclick = async () => {
   status.textContent = "Submitting…";
   let pat = localStorage.getItem("wc_pat");
   if (!pat) {
-    pat = prompt("One-time setup: enter the family GitHub token (ask Dad):");
+    pat = prompt("One-time setup: enter the family GitHub token (ask Immanuel):");
     if (!pat) { status.textContent = "Cancelled."; return; }
     localStorage.setItem("wc_pat", pat);
   }
