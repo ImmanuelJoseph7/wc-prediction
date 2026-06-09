@@ -2,7 +2,7 @@ name: Fetch Scores
 
 on:
   schedule:
-    - cron: "*/15 * * * *"  # Every 15 minutes during tournament
+    - cron: "*/45 * * * *"  # Every 45 minutes
   workflow_dispatch:
 
 jobs:
