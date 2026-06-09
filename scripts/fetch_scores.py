@@ -17,23 +17,44 @@ def main():
         local_matches = json.load(f)
 
     changed = False
-    for match in local_matches:
-        api = api_matches.get(match["id"])
-        if not api:
-            continue
-        new_status = api["status"]
-        new_home = api["score"]["fullTime"]["home"]
-        new_away = api["score"]["fullTime"]["away"]
+    local_by_id = {m["id"]: m for m in local_matches}
 
-        if (match["status"] != new_status or
-                match["home_score"] != new_home or
-                match["away_score"] != new_away):
-            match["status"] = new_status
-            match["home_score"] = new_home
-            match["away_score"] = new_away
+    for mid, api in api_matches.items():
+        if mid in local_by_id:
+            match = local_by_id[mid]
+            new_status = api["status"]
+            new_home = api["score"]["fullTime"]["home"]
+            new_away = api["score"]["fullTime"]["away"]
+            new_home_team = api["homeTeam"]["name"]
+            new_away_team = api["awayTeam"]["name"]
+
+            if (match["status"] != new_status or
+                    match["home_score"] != new_home or
+                    match["away_score"] != new_away or
+                    match["home_team"] != new_home_team or
+                    match["away_team"] != new_away_team):
+                match["status"] = new_status
+                match["home_score"] = new_home
+                match["away_score"] = new_away
+                match["home_team"] = new_home_team
+                match["away_team"] = new_away_team
+                changed = True
+        else:
+            local_matches.append({
+                "id": mid,
+                "home_team": api["homeTeam"]["name"],
+                "away_team": api["awayTeam"]["name"],
+                "group": api.get("group"),
+                "stage": api["stage"],
+                "datetime": api["utcDate"],
+                "status": api["status"],
+                "home_score": api["score"]["fullTime"]["home"],
+                "away_score": api["score"]["fullTime"]["away"],
+            })
             changed = True
 
     if changed:
+        local_matches.sort(key=lambda x: x["datetime"])
         with open("data/matches.json", "w") as f:
             json.dump(local_matches, f, indent=2)
         print("Matches updated.")
