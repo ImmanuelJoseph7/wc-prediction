@@ -46,5 +46,21 @@
     "exact_scores": 0,
     "predictions_made": 4,
     "match_results": []
+  },
+  {
+    "user": "Kevin D",
+    "total_points": 0,
+    "correct_winners": 0,
+    "exact_scores": 0,
+    "predictions_made": 0,
+    "match_results": []
+  },
+  {
+    "user": "Jorryn D",
+    "total_points": 0,
+    "correct_winners": 0,
+    "exact_scores": 0,
+    "predictions_made": 0,
+    "match_results": []
   }
 ]
