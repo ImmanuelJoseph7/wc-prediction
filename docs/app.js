@@ -116,6 +116,7 @@ document.getElementById("login-btn").onclick = async () => {
 
 // Registration
 document.getElementById("register-btn").onclick = async () => {
+  const btn = document.getElementById("register-btn");
   const name = document.getElementById("reg-name").value.trim();
   const pin = document.getElementById("reg-pin").value;
   const confirm = document.getElementById("reg-pin-confirm").value;
@@ -128,11 +129,15 @@ document.getElementById("register-btn").onclick = async () => {
   if (pin !== confirm) { err.textContent = "PINs don't match."; return; }
   if (users.find(u => u.name === name)) { err.textContent = "Name already taken."; return; }
 
+  btn.disabled = true;
+  btn.textContent = "Registering…";
   const hash = await hashPin(pin);
 
   if (IS_LOCAL) {
     users.push({ name, pin_hash: hash, created_at: new Date().toISOString() });
     success.textContent = "✓ Registered! Select your name above to login.";
+    btn.disabled = false;
+    btn.textContent = "Register";
     await populateUserSelect();
     return;
   }
@@ -140,7 +145,7 @@ document.getElementById("register-btn").onclick = async () => {
   let pat = localStorage.getItem("wc_pat");
   if (!pat) {
     pat = prompt("One-time setup: enter the family GitHub token (ask Immanuel):");
-    if (!pat) { err.textContent = "Cancelled."; return; }
+    if (!pat) { err.textContent = "Cancelled."; btn.disabled = false; btn.textContent = "Register"; return; }
     localStorage.setItem("wc_pat", pat);
   }
 
@@ -154,9 +159,13 @@ document.getElementById("register-btn").onclick = async () => {
       success.textContent = "✓ Registered! Wait ~30s then refresh to login.";
     } else {
       err.textContent = `Error: ${resp.status}`;
+      btn.disabled = false;
+      btn.textContent = "Register";
     }
   } catch (e) {
     err.textContent = `Failed: ${e.message}`;
+    btn.disabled = false;
+    btn.textContent = "Register";
   }
 };
 
@@ -231,6 +240,7 @@ function renderResults() {
 
 // Submit predictions
 document.getElementById("submit-preds").onclick = async () => {
+  const btn = document.getElementById("submit-preds");
   const cards = document.querySelectorAll(".match-card");
   const preds = [];
   cards.forEach(card => {
@@ -244,9 +254,10 @@ document.getElementById("submit-preds").onclick = async () => {
   if (!preds.length) { document.getElementById("submit-status").textContent = "Enter at least one prediction."; return; }
 
   const status = document.getElementById("submit-status");
+  btn.disabled = true;
+  btn.textContent = "Submitting…";
 
   if (IS_LOCAL) {
-    // Save to localStorage so they persist on refresh
     const stored = JSON.parse(localStorage.getItem("wc_local_preds") || "[]");
     const updated = stored.filter(p => !(p.user === currentUser && preds.some(np => np.match_id === p.match_id)));
     for (const p of preds) {
@@ -255,15 +266,17 @@ document.getElementById("submit-preds").onclick = async () => {
     localStorage.setItem("wc_local_preds", JSON.stringify(updated));
     predictions = updated;
     status.textContent = `✓ Saved ${preds.length} prediction(s) for ${currentUser}.`;
+    btn.disabled = false;
+    btn.textContent = "Submit Predictions";
     render();
     return;
   }
 
-  status.textContent = "Submitting…";
+  status.textContent = "Submitting… please wait ~30s";
   let pat = localStorage.getItem("wc_pat");
   if (!pat) {
     pat = prompt("One-time setup: enter the family GitHub token (ask Immanuel):");
-    if (!pat) { status.textContent = "Cancelled."; return; }
+    if (!pat) { status.textContent = "Cancelled."; btn.disabled = false; btn.textContent = "Submit Predictions"; return; }
     localStorage.setItem("wc_pat", pat);
   }
 
@@ -277,8 +290,12 @@ document.getElementById("submit-preds").onclick = async () => {
       status.textContent = "✓ Submitted! Results update in ~30s.";
     } else {
       status.textContent = `Error: ${resp.status}`;
+      btn.disabled = false;
+      btn.textContent = "Submit Predictions";
     }
   } catch (e) {
     status.textContent = `Failed: ${e.message}`;
+    btn.disabled = false;
+    btn.textContent = "Submit Predictions";
   }
 };
