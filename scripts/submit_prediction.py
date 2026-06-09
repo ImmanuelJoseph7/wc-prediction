@@ -21,26 +21,32 @@ if user_rec["pin_hash"] != pin_hash:
     print("Invalid PIN")
     sys.exit(1)
 
-# Validate match times
+# Validate match times - skip started matches
 with open("data/matches.json") as f:
     matches = {m["id"]: m for m in json.load(f)}
 now = datetime.now(timezone.utc).isoformat()
 new_preds = json.loads(preds_raw)
+valid_preds = []
 for p in new_preds:
     m = matches.get(p["match_id"])
     if not m:
-        print(f"Match {p['match_id']} not found")
-        sys.exit(1)
+        print(f"Match {p['match_id']} not found, skipping")
+        continue
     if m["datetime"] <= now:
-        print(f"Match {p['match_id']} already started")
-        sys.exit(1)
+        print(f"Match {p['match_id']} already started, skipping")
+        continue
+    valid_preds.append(p)
+
+if not valid_preds:
+    print("No valid predictions (all matches already started)")
+    sys.exit(0)
 
 # Merge predictions
 with open("data/predictions.json") as f:
     all_preds = json.load(f)
-existing_keys = {p["match_id"] for p in new_preds}
+existing_keys = {p["match_id"] for p in valid_preds}
 all_preds = [p for p in all_preds if not (p["user"] == user and p["match_id"] in existing_keys)]
-for p in new_preds:
+for p in valid_preds:
     all_preds.append({
         "user": user,
         "match_id": p["match_id"],
@@ -50,4 +56,4 @@ for p in new_preds:
     })
 with open("data/predictions.json", "w") as f:
     json.dump(all_preds, f, indent=2)
-print(f"Saved {len(new_preds)} predictions for {user}.")
+print(f"Saved {len(valid_preds)} predictions for {user}.")
