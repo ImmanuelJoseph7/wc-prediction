@@ -188,7 +188,7 @@ function render() {
 
 function renderPredict() {
   const now = new Date();
-  const cutoff = new Date(now.getTime() + 96 * 60 * 60 * 1000).toISOString();
+  const cutoff = new Date(now.getTime() + 48 * 60 * 60 * 1000).toISOString();
   const upcoming = matches.filter(m => m.datetime > now.toISOString() && m.datetime <= cutoff && (m.status === "SCHEDULED" || m.status === "TIMED"));
   const container = document.getElementById("matches-list");
 
@@ -199,7 +199,13 @@ function renderPredict() {
     const hVal = existing ? existing.home_score : "";
     const aVal = existing ? existing.away_score : "";
     const dt = new Date(m.datetime).toLocaleString([], { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    const diff = new Date(m.datetime) - now;
+    const h = Math.floor(diff / 3600000);
+    const min = Math.floor((diff % 3600000) / 60000);
+    const sec = Math.floor((diff % 60000) / 1000);
+    const countdown = h > 0 ? `${h}h ${min}m` : `${min}m ${sec}s`;
     return `<div class="match-card" data-id="${m.id}">
+      <div class="match-time"><strong>${dt}</strong></div>
       <span class="team">${flag(m.home_team)} ${m.home_team}</span>
       <div class="score-inputs">
         <input type="number" min="0" max="20" class="home-score" value="${hVal}">
@@ -207,7 +213,8 @@ function renderPredict() {
         <input type="number" min="0" max="20" class="away-score" value="${aVal}">
       </div>
       <span class="team">${m.away_team} ${flag(m.away_team)}</span>
-      <span class="meta">${m.group || m.stage} · ${dt}</span>
+      <span class="meta">${m.group || m.stage}</span>
+      <div class="countdown">⏱ ${countdown}</div>
     </div>`;
   }).join("");
 
@@ -239,6 +246,22 @@ function renderResults() {
 }
 
 // Submit predictions
+// Live countdown ticker for matches < 1 hour away
+setInterval(() => {
+  const now = new Date();
+  document.querySelectorAll(".match-card").forEach(card => {
+    const m = matches.find(x => x.id === parseInt(card.dataset.id));
+    if (!m) return;
+    const diff = new Date(m.datetime) - now;
+    if (diff <= 0) { renderPredict(); return; }
+    if (diff < 3600000) {
+      const min = Math.floor(diff / 60000);
+      const sec = Math.floor((diff % 60000) / 1000);
+      card.querySelector(".countdown").textContent = `⏱ ${min}m ${sec}s`;
+    }
+  });
+}, 1000);
+
 document.getElementById("submit-preds").onclick = async () => {
   const btn = document.getElementById("submit-preds");
   const cards = document.querySelectorAll(".match-card");

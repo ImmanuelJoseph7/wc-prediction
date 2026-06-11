@@ -99,6 +99,22 @@ nav {
   grid-column: 1 / -1;
   font-size: 0.8rem;
   color: #888;
+  text-align: center;
+}
+
+.match-card .match-time {
+  grid-column: 1 / -1;
+  text-align: center;
+  font-size: 0.95rem;
+  color: #222;
+}
+
+.match-card .countdown {
+  grid-column: 1 / -1;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--pitch-dark);
+  font-weight: 600;
 }
 
 .submit-btn {
