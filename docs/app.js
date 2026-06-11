@@ -37,9 +37,7 @@ let users = [];
 async function populateUserSelect() {
   const fetchJson = (file) => {
     if (IS_LOCAL) return fetch(`/data/${file}`).then(r => r.json());
-    return fetch(`https://api.github.com/repos/${REPO}/contents/data/${file}`, {
-      headers: { Accept: "application/vnd.github.v3.raw" }
-    }).then(r => r.json());
+    return fetch(`https://raw.githubusercontent.com/${REPO}/main/data/${file}?t=${Date.now()}`).then(r => r.json());
   };
   const u = await fetchJson("users.json");
   const sel = document.getElementById("user-select");
@@ -63,9 +61,7 @@ async function populateUserSelect() {
 async function loadData() {
   const fetchJson = (file) => {
     if (IS_LOCAL) return fetch(`/data/${file}`).then(r => r.json());
-    return fetch(`https://api.github.com/repos/${REPO}/contents/data/${file}`, {
-      headers: { Accept: "application/vnd.github.v3.raw" }
-    }).then(r => r.json());
+    return fetch(`https://raw.githubusercontent.com/${REPO}/main/data/${file}?t=${Date.now()}`).then(r => r.json());
   };
   [matches, predictions, leaderboard, users] = await Promise.all([
     fetchJson("matches.json"),
