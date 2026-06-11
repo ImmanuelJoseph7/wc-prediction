@@ -204,18 +204,19 @@ function renderPredict() {
     const min = Math.floor((diff % 3600000) / 60000);
     const sec = Math.floor((diff % 60000) / 1000);
     const countdown = h > 0 ? `${h}h ${min}m` : `${min}m ${sec}s`;
+    const groupLabel = (m.group || m.stage).replace("GROUP_", "Group ").replace("_", " ");
     return `<div class="match-card" data-id="${m.id}">
+      <span class="group-tag">${groupLabel}</span>
       <div class="match-time"><strong>${dt}</strong></div>
-      <span class="group-tag">${m.group || m.stage}</span>
-      <span class="team">${m.home_team}</span>
-      <div class="score-inputs">
-        ${flag(m.home_team)}
-        <input type="number" min="0" max="20" class="home-score" value="${hVal}">
-        <span>–</span>
-        <input type="number" min="0" max="20" class="away-score" value="${aVal}">
-        ${flag(m.away_team)}
+      <div class="score-row">
+        <span class="team">${m.home_team} ${flag(m.home_team)}</span>
+        <div class="score-inputs">
+          <input type="number" min="0" max="20" class="home-score" value="${hVal}">
+          <span>–</span>
+          <input type="number" min="0" max="20" class="away-score" value="${aVal}">
+        </div>
+        <span class="team">${flag(m.away_team)} ${m.away_team}</span>
       </div>
-      <span class="team">${m.away_team}</span>
       <div class="countdown">⏱ ${countdown}</div>
     </div>`;
   }).join("");

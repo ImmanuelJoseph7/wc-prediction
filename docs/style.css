@@ -64,14 +64,25 @@ nav {
 .match-card .team {
   font-weight: 700;
   color: #222;
-  font-size: 1rem;
+  font-size: 0.95rem;
 }
-.match-card .team:last-of-type { text-align: right; }
+
+.match-card .score-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.match-card .score-row .team:first-child { text-align: right; }
 
 .match-card .score-inputs {
   display: flex;
   align-items: center;
   gap: 0.4rem;
+  flex-shrink: 0;
 }
 
 .match-card input[type="number"] {
