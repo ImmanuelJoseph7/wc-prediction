@@ -1,0 +1,37 @@
+name: Admin Scores
+
+on:
+  workflow_dispatch:
+    inputs:
+      scores:
+        description: "JSON array of {match_id, home_score, away_score}"
+        required: true
+        type: string
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install -r requirements.txt
+
+      - name: Update scores
+        env:
+          INPUT_SCORES: ${{ github.event.inputs.scores }}
+        run: python scripts/admin_scores.py
+
+      - run: python scripts/calculate.py
+
+      - name: Commit & push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/
+          git diff --staged --quiet || (git commit -m "Admin: manual score update" && git pull --rebase && git push)

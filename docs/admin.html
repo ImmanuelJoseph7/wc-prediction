@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Score Entry</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="container">
+    <h1>🔒 Admin: Enter Scores</h1>
+    <dialog id="admin-login" open>
+      <article>
+        <h2>Admin Login</h2>
+        <input type="password" id="pin-input" placeholder="PIN" maxlength="4" pattern="\d{4}">
+        <button id="login-btn">Login</button>
+        <small id="login-error" class="error"></small>
+      </article>
+    </dialog>
+
+    <section id="admin-panel" class="hidden">
+      <h2>Matches Missing Scores</h2>
+      <div id="matches-list"></div>
+      <button id="submit-scores" disabled>Submit Scores</button>
+      <small id="status"></small>
+    </section>
+  </main>
+  <script>
+const REPO = "ImmanuelJoseph7/wc-prediction";
+const ADMIN_HASH = "41c991eb6a66242c0454191244278183ce58cf4a6bcd372f799e4b9cc01886af";
+const IS_LOCAL = location.hostname === "localhost" || location.hostname === "127.0.0.1";
+
+async function hashPin(pin) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(pin));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+document.getElementById("login-btn").onclick = async () => {
+  const pin = document.getElementById("pin-input").value;
+  if ((await hashPin(pin)) !== ADMIN_HASH) {
+    document.getElementById("login-error").textContent = "Access denied.";
+    return;
+  }
+  document.getElementById("admin-login").close();
+  document.getElementById("admin-panel").classList.remove("hidden");
+  loadMatches();
+};
+
+async function fetchJson(file) {
+  if (IS_LOCAL) return fetch(`/data/${file}`).then(r => r.json());
+  return fetch(`https://raw.githubusercontent.com/${REPO}/main/data/${file}?t=${Date.now()}`).then(r => r.json());
+}
+
+async function loadMatches() {
+  const matches = await fetchJson("matches.json");
+  const now = new Date();
+  // Show matches whose kickoff has passed but have no score
+  const needScore = matches.filter(m => new Date(m.datetime) < now && m.home_score === null);
+  const container = document.getElementById("matches-list");
+
+  if (!needScore.length) { container.innerHTML = "<p>All past matches have scores. ✓</p>"; return; }
+
+  container.innerHTML = needScore.map(m => {
+    const dt = new Date(m.datetime).toLocaleString([], { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    return `<div class="match-card" data-id="${m.id}">
+      <div class="match-time">${dt}</div>
+      <div class="score-row">
+        <span class="team home">${m.home_team}</span>
+        <input type="number" min="0" max="20" class="home-score" placeholder="H">
+        <span class="vs">–</span>
+        <input type="number" min="0" max="20" class="away-score" placeholder="A">
+        <span class="team away">${m.away_team}</span>
+      </div>
+    </div>`;
+  }).join("");
+  document.getElementById("submit-scores").disabled = false;
+}
+
+document.getElementById("submit-scores").onclick = async () => {
+  const cards = document.querySelectorAll(".match-card");
+  const scores = [];
+  cards.forEach(card => {
+    const h = card.querySelector(".home-score").value;
+    const a = card.querySelector(".away-score").value;
+    if (h !== "" && a !== "") {
+      scores.push({ match_id: parseInt(card.dataset.id), home_score: parseInt(h), away_score: parseInt(a) });
+    }
+  });
+  if (!scores.length) { document.getElementById("status").textContent = "Enter at least one score."; return; }
+
+  const btn = document.getElementById("submit-scores");
+  const status = document.getElementById("status");
+  btn.disabled = true;
+  btn.textContent = "Submitting…";
+
+  let pat = localStorage.getItem("wc_pat");
+  if (!pat) {
+    pat = prompt("Enter GitHub PAT:");
+    if (!pat) { status.textContent = "Cancelled."; btn.disabled = false; btn.textContent = "Submit Scores"; return; }
+    localStorage.setItem("wc_pat", pat);
+  }
+
+  try {
+    const resp = await fetch(`https://api.github.com/repos/${REPO}/actions/workflows/admin-scores.yml/dispatches`, {
+      method: "POST",
+      headers: { Authorization: `token ${pat}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ ref: "main", inputs: { scores: JSON.stringify(scores) } }),
+    });
+    if (resp.status === 204) {
+      status.textContent = "✓ Scores submitted! Leaderboard will update in ~30s.";
+    } else {
+      status.textContent = `Error: ${resp.status}`;
+      btn.disabled = false; btn.textContent = "Submit Scores";
+    }
+  } catch (e) {
+    status.textContent = `Failed: ${e.message}`;
+    btn.disabled = false; btn.textContent = "Submit Scores";
+  }
+};
+  </script>
+</body>
+</html>
