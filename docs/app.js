@@ -200,10 +200,11 @@ function renderPredict() {
     const aVal = existing ? existing.away_score : "";
     const dt = new Date(m.datetime).toLocaleString([], { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
     const diff = new Date(m.datetime) - now;
-    const h = Math.floor(diff / 3600000);
+    const d = Math.floor(diff / 86400000);
+    const h = Math.floor((diff % 86400000) / 3600000);
     const min = Math.floor((diff % 3600000) / 60000);
     const sec = Math.floor((diff % 60000) / 1000);
-    const countdown = h > 0 ? `${h}h ${min}m` : `${min}m ${sec}s`;
+    const countdown = d > 0 ? `${d}d ${h}h ${min}m` : h > 0 ? `${h}h ${min}m` : `${min}m ${sec}s`;
     const groupLabel = (m.group || m.stage).replace("GROUP_", "Group ").replace("_", " ");
     return `<div class="match-card" data-id="${m.id}">
       <span class="group-tag">${groupLabel}</span>
