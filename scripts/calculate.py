@@ -38,6 +38,8 @@ def main():
             m = matches.get(p["match_id"])
             if not m or m["status"] != "FINISHED":
                 continue
+            if m["home_score"] is None or m["away_score"] is None:
+                continue
             pts = score_prediction(
                 p["home_score"], p["away_score"],
                 m["home_score"], m["away_score"]
