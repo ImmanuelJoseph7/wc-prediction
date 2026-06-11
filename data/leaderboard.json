@@ -1,19 +1,93 @@
 [
   {
+    "user": "Jorryn D",
+    "total_points": 7,
+    "correct_winners": 1,
+    "exact_scores": 1,
+    "predictions_made": 12,
+    "match_results": [
+      {
+        "match_id": 537327,
+        "prediction": "2-0",
+        "actual": "2-0",
+        "points": 7
+      }
+    ]
+  },
+  {
     "user": "Immanuel J",
-    "total_points": 0,
-    "correct_winners": 0,
+    "total_points": 2,
+    "correct_winners": 1,
     "exact_scores": 0,
     "predictions_made": 12,
-    "match_results": []
+    "match_results": [
+      {
+        "match_id": 537327,
+        "prediction": "2-1",
+        "actual": "2-0",
+        "points": 2
+      }
+    ]
   },
   {
     "user": "Samuel G",
-    "total_points": 0,
-    "correct_winners": 0,
+    "total_points": 2,
+    "correct_winners": 1,
     "exact_scores": 0,
     "predictions_made": 2,
-    "match_results": []
+    "match_results": [
+      {
+        "match_id": 537327,
+        "prediction": "2-1",
+        "actual": "2-0",
+        "points": 2
+      }
+    ]
+  },
+  {
+    "user": "Sharon J",
+    "total_points": 2,
+    "correct_winners": 1,
+    "exact_scores": 0,
+    "predictions_made": 6,
+    "match_results": [
+      {
+        "match_id": 537327,
+        "prediction": "2-1",
+        "actual": "2-0",
+        "points": 2
+      }
+    ]
+  },
+  {
+    "user": "Vasanthan E",
+    "total_points": 2,
+    "correct_winners": 1,
+    "exact_scores": 0,
+    "predictions_made": 5,
+    "match_results": [
+      {
+        "match_id": 537327,
+        "prediction": "5-2",
+        "actual": "2-0",
+        "points": 2
+      }
+    ]
+  },
+  {
+    "user": "Odelia J",
+    "total_points": 2,
+    "correct_winners": 1,
+    "exact_scores": 0,
+    "predictions_made": 12,
+    "match_results": [
+      {
+        "match_id": 537327,
+        "prediction": "2-1",
+        "actual": "2-0",
+        "points": 2
+      }
+    ]
   },
   {
     "user": "Timothy J",
@@ -21,15 +95,14 @@
     "correct_winners": 0,
     "exact_scores": 0,
     "predictions_made": 12,
-    "match_results": []
-  },
-  {
-    "user": "Sharon J",
-    "total_points": 0,
-    "correct_winners": 0,
-    "exact_scores": 0,
-    "predictions_made": 6,
-    "match_results": []
+    "match_results": [
+      {
+        "match_id": 537327,
+        "prediction": "1-1",
+        "actual": "2-0",
+        "points": 0
+      }
+    ]
   },
   {
     "user": "Joanna E",
@@ -37,15 +110,14 @@
     "correct_winners": 0,
     "exact_scores": 0,
     "predictions_made": 4,
-    "match_results": []
-  },
-  {
-    "user": "Vasanthan E",
-    "total_points": 0,
-    "correct_winners": 0,
-    "exact_scores": 0,
-    "predictions_made": 5,
-    "match_results": []
+    "match_results": [
+      {
+        "match_id": 537327,
+        "prediction": "1-2",
+        "actual": "2-0",
+        "points": 0
+      }
+    ]
   },
   {
     "user": "Kevin D",
@@ -53,22 +125,13 @@
     "correct_winners": 0,
     "exact_scores": 0,
     "predictions_made": 8,
-    "match_results": []
-  },
-  {
-    "user": "Jorryn D",
-    "total_points": 0,
-    "correct_winners": 0,
-    "exact_scores": 0,
-    "predictions_made": 12,
-    "match_results": []
-  },
-  {
-    "user": "Odelia J",
-    "total_points": 0,
-    "correct_winners": 0,
-    "exact_scores": 0,
-    "predictions_made": 12,
-    "match_results": []
+    "match_results": [
+      {
+        "match_id": 537327,
+        "prediction": "1-2",
+        "actual": "2-0",
+        "points": 0
+      }
+    ]
   }
 ]
