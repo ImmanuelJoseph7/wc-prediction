@@ -65,25 +65,14 @@ nav {
   font-weight: 700;
   color: #222;
   font-size: 0.95rem;
+  text-align: center;
 }
-
-.match-card .score-row {
-  display: grid;
-  grid-template-columns: 1fr auto auto auto 1fr;
-  align-items: center;
-  gap: 0.4rem;
-  width: 100%;
-}
-
-.match-card .score-row .team.home { text-align: right; }
-.match-card .score-row .team.away { text-align: left; }
-.match-card .score-row .vs { font-weight: 700; }
 
 .match-card .score-inputs {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.4rem;
-  flex-shrink: 0;
 }
 
 .match-card input[type="number"] {
