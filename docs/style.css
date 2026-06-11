@@ -153,25 +153,30 @@ nav {
 }
 
 #leaderboard-table th {
-  background: #e8f5e9;
-  color: #1B5E20;
-  padding: 0.7rem 1rem;
-  text-align: left;
-  font-size: 0.85rem;
+  color: #666;
+  padding: 0.5rem 0.6rem;
+  text-align: center;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  white-space: nowrap;
+  border-bottom: 2px solid #ddd;
+  font-weight: 600;
 }
+
+#leaderboard-table th:nth-child(2) { text-align: left; }
 
 #leaderboard-table td {
-  padding: 0.7rem 1rem;
+  padding: 0.7rem 0.6rem;
   border-bottom: 1px solid #eee;
-  font-size: 1rem;
+  font-size: 0.95rem;
   white-space: nowrap;
+  text-align: center;
 }
 
+#leaderboard-table td:nth-child(2) { text-align: left; }
+
 #leaderboard-table tr:nth-child(even) {
-  background: #f9fafb;
+  background: transparent;
 }
 
 #leaderboard-table tr:nth-child(1) td {
@@ -268,6 +273,12 @@ dialog input {
 .pred-exact { background: #c8e6c9; color: #1B5E20; font-weight: 700; }
 .pred-correct { background: #fff9c4; color: #f57f17; font-weight: 600; }
 .pred-wrong { background: #ffcdd2; color: #c62828; }
+
+.recent { white-space: nowrap; }
+.dot { font-size: 1.1rem; margin: 0 1px; }
+.dot-exact { color: #2E7D32; }
+.dot-correct { color: #F9A825; }
+.dot-wrong { color: #c62828; }
 
 #submit-status {
   display: block;
