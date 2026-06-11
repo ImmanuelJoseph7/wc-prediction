@@ -147,13 +147,17 @@ nav {
 .error { color: #d32f2f; }
 .success { color: #2E7D32; }
 
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
 #leaderboard-table {
   width: 100%;
   border-collapse: collapse;
+  background: transparent !important;
+  --pico-color: #222;
 }
 
 #leaderboard-table th {
-  color: #666;
+  color: #666 !important;
   padding: 0.5rem 0.6rem;
   text-align: center;
   font-size: 0.75rem;
@@ -161,6 +165,7 @@ nav {
   letter-spacing: 0.03em;
   border-bottom: 2px solid #ddd;
   font-weight: 600;
+  background: transparent !important;
 }
 
 #leaderboard-table th:nth-child(2) { text-align: left; }
@@ -171,16 +176,22 @@ nav {
   font-size: 0.95rem;
   white-space: nowrap;
   text-align: center;
+  background: transparent !important;
+  color: #222 !important;
 }
 
 #leaderboard-table td:nth-child(2) { text-align: left; }
 
 #leaderboard-table tr:nth-child(even) {
-  background: transparent;
+  background: transparent !important;
 }
 
-#leaderboard-table tr:nth-child(1) td {
-  background: #FFF9C4;
+#leaderboard-table tr:nth-child(even) td {
+  background: transparent !important;
+}
+
+#leaderboard-table tr:first-child td {
+  background: #FFF9C4 !important;
   font-weight: 700;
 }
 
