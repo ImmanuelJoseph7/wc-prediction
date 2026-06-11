@@ -209,13 +209,11 @@ function renderPredict() {
       <span class="group-tag">${groupLabel}</span>
       <div class="match-time"><strong>${dt}</strong></div>
       <div class="score-row">
-        <span class="team">${m.home_team} ${flag(m.home_team)}</span>
-        <div class="score-inputs">
-          <input type="number" min="0" max="20" class="home-score" value="${hVal}">
-          <span>–</span>
-          <input type="number" min="0" max="20" class="away-score" value="${aVal}">
-        </div>
-        <span class="team">${flag(m.away_team)} ${m.away_team}</span>
+        <span class="team home">${m.home_team} ${flag(m.home_team)}</span>
+        <input type="number" min="0" max="20" class="home-score" value="${hVal}">
+        <span class="vs">–</span>
+        <input type="number" min="0" max="20" class="away-score" value="${aVal}">
+        <span class="team away">${flag(m.away_team)} ${m.away_team}</span>
       </div>
       <div class="countdown">⏱ ${countdown}</div>
     </div>`;
