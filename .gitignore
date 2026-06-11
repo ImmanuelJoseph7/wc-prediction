@@ -1,1 +1,3 @@
 PROGRESS.md
+scripts/check_scores.py
+*.pyc
