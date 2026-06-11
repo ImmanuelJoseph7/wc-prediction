@@ -153,19 +153,21 @@ nav {
 }
 
 #leaderboard-table th {
-  background: var(--pitch-dark);
-  color: white;
+  background: #e8f5e9;
+  color: #1B5E20;
   padding: 0.7rem 1rem;
   text-align: left;
   font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.03em;
+  white-space: nowrap;
 }
 
 #leaderboard-table td {
   padding: 0.7rem 1rem;
   border-bottom: 1px solid #eee;
   font-size: 1rem;
+  white-space: nowrap;
 }
 
 #leaderboard-table tr:nth-child(even) {
@@ -261,6 +263,12 @@ dialog input {
   cursor: pointer;
 }
 
+.pred-list { list-style: none; padding: 0.5rem 0; margin: 0; }
+.pred-list li { padding: 0.3rem 0.6rem; margin: 0.2rem 0; border-radius: 4px; font-size: 0.9rem; }
+.pred-exact { background: #c8e6c9; color: #1B5E20; font-weight: 700; }
+.pred-correct { background: #fff9c4; color: #f57f17; font-weight: 600; }
+.pred-wrong { background: #ffcdd2; color: #c62828; }
+
 #submit-status {
   display: block;
   margin-top: 0.5rem;
@@ -282,8 +290,8 @@ dialog input {
   }
 
   .result-card {
-    flex-direction: column;
-    text-align: center;
     gap: 0.3rem;
+    font-size: 0.85rem;
   }
+  .result-card .score { font-size: 1.1rem; }
 }

@@ -223,16 +223,21 @@ function renderLeaderboard() {
   const tbody = document.querySelector("#leaderboard-table tbody");
   const medals = ["🥇", "🥈", "🥉"];
   tbody.innerHTML = leaderboard.map((u, i) =>
-    `<tr><td>${medals[i] || i + 1}</td><td>${u.user}</td><td><strong>${u.total_points}</strong></td><td>${u.exact_scores}</td><td>${u.correct_winners}</td><td>${u.predictions_made}</td></tr>`
+    `<tr><td>${medals[i] || i + 1}</td><td>${u.user}</td><td>${u.predictions_made}</td><td><strong>${u.total_points}</strong></td><td>${u.correct_winners}</td><td>${u.exact_scores}</td></tr>`
   ).join("");
 
   // Breakdown: show all finished match predictions once match has started
-  const finished = matches.filter(m => m.status === "FINISHED");
+  const finished = matches.filter(m => m.status === "FINISHED").sort((a, b) => b.datetime.localeCompare(a.datetime));
   const breakdown = document.getElementById("breakdown");
   breakdown.innerHTML = finished.map(m => {
     const preds = predictions.filter(p => p.match_id === m.id);
-    const rows = preds.map(p => `<li>${p.user}: ${p.home_score}-${p.away_score}</li>`).join("");
-    return `<details><summary>${flag(m.home_team)} ${m.home_team} ${m.home_score}–${m.away_score} ${m.away_team} ${flag(m.away_team)}</summary><ul>${rows}</ul></details>`;
+    const rows = preds.map(p => {
+      const result = leaderboard.flatMap(u => u.match_results || []).find(r => r.match_id === m.id && leaderboard.find(lu => lu.user === p.user)?.match_results?.includes(r));
+      const pts = leaderboard.find(u => u.user === p.user)?.match_results?.find(r => r.match_id === m.id)?.points;
+      const cls = pts === 7 ? 'exact' : pts === 2 ? 'correct' : 'wrong';
+      return `<li class="pred-${cls}">${p.user}: ${p.home_score}-${p.away_score}</li>`;
+    }).join("");
+    return `<details><summary>${flag(m.home_team)} ${m.home_team} ${m.home_score}–${m.away_score} ${m.away_team} ${flag(m.away_team)}</summary><ul class="pred-list">${rows}</ul></details>`;
   }).join("");
 }
 
