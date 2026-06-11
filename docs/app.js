@@ -206,14 +206,16 @@ function renderPredict() {
     const countdown = h > 0 ? `${h}h ${min}m` : `${min}m ${sec}s`;
     return `<div class="match-card" data-id="${m.id}">
       <div class="match-time"><strong>${dt}</strong></div>
-      <span class="team">${flag(m.home_team)} ${m.home_team}</span>
+      <span class="group-tag">${m.group || m.stage}</span>
+      <span class="team">${m.home_team}</span>
       <div class="score-inputs">
+        ${flag(m.home_team)}
         <input type="number" min="0" max="20" class="home-score" value="${hVal}">
         <span>–</span>
         <input type="number" min="0" max="20" class="away-score" value="${aVal}">
+        ${flag(m.away_team)}
       </div>
-      <span class="team">${m.away_team} ${flag(m.away_team)}</span>
-      <span class="meta">${m.group || m.stage}</span>
+      <span class="team">${m.away_team}</span>
       <div class="countdown">⏱ ${countdown}</div>
     </div>`;
   }).join("");
