@@ -291,7 +291,7 @@ dialog input {
 .breakdown-table td { padding: 0.4rem; text-align: center; border-bottom: 1px solid #eee; color: #222 !important; }
 .breakdown-table .game-cell { white-space: nowrap; text-align: left; font-weight: 600; font-size: 0.8rem; background: transparent !important; }
 .breakdown-table .game-cell .abr { margin: 0 0.3rem; }
-.bd-cell { border-radius: 3px; font-weight: 600; font-size: 0.75rem; }
+.bd-cell { border-radius: 3px; font-weight: 600; font-size: 0.75rem; white-space: nowrap; }
 .breakdown-table td.bd-exact { background: #c8e6c9 !important; color: #1B5E20 !important; }
 .breakdown-table td.bd-correct { background: #fff9c4 !important; color: #f57f17 !important; }
 .breakdown-table td.bd-wrong { background: #ffcdd2 !important; color: #c62828 !important; }
@@ -312,8 +312,8 @@ dialog input {
 
 
 @media (max-width: 480px) {
-  nav { flex-wrap: wrap; }
-  .tab { flex: 1; text-align: center; padding: 0.5rem 0.8rem; font-size: 0.9rem; }
+  nav { flex-wrap: nowrap; }
+  .tab { flex: 1; text-align: center; padding: 0.5rem 0.4rem; font-size: 0.8rem; }
 
   .match-card .team { font-size: 0.85rem; }
   .match-card input[type="number"] { width: 2.5rem; padding: 0.3rem; font-size: 1rem; }
