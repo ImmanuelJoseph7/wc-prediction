@@ -148,6 +148,7 @@ nav {
 .success { color: #2E7D32; }
 
 .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.table-legend { display: block; margin-top: 0.5rem; color: #888; font-size: 0.75rem; }
 
 #leaderboard-table {
   width: 100%;

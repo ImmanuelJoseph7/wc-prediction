@@ -62,6 +62,7 @@ def main():
             "correct_winners": correct_winners,
             "exact_scores": exact_scores,
             "predictions_made": len(user_preds),
+            "games_played": len(match_results),
             "match_results": match_results,
         })
 

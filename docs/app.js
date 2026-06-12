@@ -226,7 +226,7 @@ function renderLeaderboard() {
     const recent = (u.match_results || []).slice(-5).map(r =>
       r.points === 7 ? '<span class="dot dot-exact">●</span>' : r.points === 2 ? '<span class="dot dot-correct">●</span>' : '<span class="dot dot-wrong">●</span>'
     ).join("");
-    return `<tr><td>${medals[i] || i + 1}</td><td>${u.user}</td><td>${u.predictions_made}</td><td><strong>${u.total_points}</strong></td><td>${u.correct_winners}</td><td>${u.exact_scores}</td><td class="recent">${recent}</td></tr>`;
+    return `<tr><td>${medals[i] || i + 1}</td><td>${u.user}</td><td>${u.predictions_made}</td><td>${u.games_played || (u.match_results||[]).length}</td><td><strong>${u.total_points}</strong></td><td>${u.correct_winners}</td><td>${u.exact_scores}</td><td class="recent">${recent}</td></tr>`;
   }).join("");
 
   // Breakdown: show all finished match predictions once match has started
