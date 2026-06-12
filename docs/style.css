@@ -201,17 +201,22 @@ nav {
   border-radius: 10px;
   padding: 0.8rem 1.2rem;
   margin-bottom: 0.5rem;
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
+  gap: 0.5rem;
   box-shadow: 0 2px 6px rgba(0,0,0,0.08);
   border-left: 4px solid var(--accent);
 }
+
+.result-card span:first-child { text-align: right; }
+.result-card span:last-child { text-align: left; }
 
 .result-card .score {
   font-weight: 800;
   font-size: 1.3rem;
   color: var(--pitch-dark);
+  text-align: center;
 }
 
 dialog article {
