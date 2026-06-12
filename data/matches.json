@@ -28,9 +28,9 @@
     "group": "GROUP_B",
     "stage": "GROUP_STAGE",
     "datetime": "2026-06-12T19:00:00Z",
-    "status": "TIMED",
-    "home_score": null,
-    "away_score": null
+    "status": "IN_PLAY",
+    "home_score": 0,
+    "away_score": 1
   },
   {
     "id": 537345,
