@@ -1,0 +1,9 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "python",
+    "SQL_CONNECTION_STRING": "Driver={ODBC Driver 18 for SQL Server};Server=YOUR_SERVER.database.windows.net;Database=YOUR_DB;Uid=YOUR_USER;Pwd=YOUR_PASS;Encrypt=yes;TrustServerCertificate=no;",
+    "FOOTBALL_API_KEY": "YOUR_KEY"
+  }
+}
