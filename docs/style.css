@@ -288,14 +288,14 @@ dialog input {
 
 .breakdown-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; background: transparent !important; }
 .breakdown-table th { padding: 0.4rem; text-align: center; border-bottom: 2px solid #ddd; color: #555; background: transparent !important; font-size: 0.75rem; }
-.breakdown-table td { padding: 0.4rem; text-align: center; border-bottom: 1px solid #eee; background: transparent !important; color: #222 !important; }
-.breakdown-table .game-cell { white-space: nowrap; text-align: left; font-weight: 600; font-size: 0.8rem; }
+.breakdown-table td { padding: 0.4rem; text-align: center; border-bottom: 1px solid #eee; color: #222 !important; }
+.breakdown-table .game-cell { white-space: nowrap; text-align: left; font-weight: 600; font-size: 0.8rem; background: transparent !important; }
 .breakdown-table .game-cell .abr { margin: 0 0.3rem; }
 .bd-cell { border-radius: 3px; font-weight: 600; font-size: 0.75rem; }
-.bd-exact { background: #c8e6c9 !important; color: #1B5E20 !important; }
-.bd-correct { background: #fff9c4 !important; color: #f57f17 !important; }
-.bd-wrong { background: #ffcdd2 !important; color: #c62828 !important; }
-.bd-none { color: #ccc !important; }
+.breakdown-table td.bd-exact { background: #c8e6c9 !important; color: #1B5E20 !important; }
+.breakdown-table td.bd-correct { background: #fff9c4 !important; color: #f57f17 !important; }
+.breakdown-table td.bd-wrong { background: #ffcdd2 !important; color: #c62828 !important; }
+.breakdown-table td.bd-none { background: transparent !important; color: #ccc !important; }
 
 .recent { white-space: nowrap; }
 .dot { font-size: 1.1rem; margin: 0 1px; }
