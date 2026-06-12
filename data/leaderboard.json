@@ -1,32 +1,66 @@
 [
   {
     "user": "Jorryn D",
-    "total_points": 7,
-    "correct_winners": 1,
-    "exact_scores": 1,
+    "total_points": 14,
+    "correct_winners": 2,
+    "exact_scores": 2,
     "predictions_made": 12,
-    "games_played": 1,
+    "games_played": 2,
     "match_results": [
       {
         "match_id": 537327,
         "prediction": "2-0",
         "actual": "2-0",
         "points": 7
+      },
+      {
+        "match_id": 537328,
+        "prediction": "2-1",
+        "actual": "2-1",
+        "points": 7
+      }
+    ]
+  },
+  {
+    "user": "Joanna E",
+    "total_points": 7,
+    "correct_winners": 1,
+    "exact_scores": 1,
+    "predictions_made": 4,
+    "games_played": 2,
+    "match_results": [
+      {
+        "match_id": 537327,
+        "prediction": "1-2",
+        "actual": "2-0",
+        "points": 0
+      },
+      {
+        "match_id": 537328,
+        "prediction": "2-1",
+        "actual": "2-1",
+        "points": 7
       }
     ]
   },
   {
     "user": "Immanuel J",
-    "total_points": 2,
-    "correct_winners": 1,
+    "total_points": 4,
+    "correct_winners": 2,
     "exact_scores": 0,
     "predictions_made": 12,
-    "games_played": 1,
+    "games_played": 2,
     "match_results": [
       {
         "match_id": 537327,
         "prediction": "2-1",
         "actual": "2-0",
+        "points": 2
+      },
+      {
+        "match_id": 537328,
+        "prediction": "1-0",
+        "actual": "2-1",
         "points": 2
       }
     ]
@@ -37,13 +71,19 @@
     "correct_winners": 1,
     "exact_scores": 0,
     "predictions_made": 2,
-    "games_played": 1,
+    "games_played": 2,
     "match_results": [
       {
         "match_id": 537327,
         "prediction": "2-1",
         "actual": "2-0",
         "points": 2
+      },
+      {
+        "match_id": 537328,
+        "prediction": "1-1",
+        "actual": "2-1",
+        "points": 0
       }
     ]
   },
@@ -53,13 +93,19 @@
     "correct_winners": 1,
     "exact_scores": 0,
     "predictions_made": 6,
-    "games_played": 1,
+    "games_played": 2,
     "match_results": [
       {
         "match_id": 537327,
         "prediction": "2-1",
         "actual": "2-0",
         "points": 2
+      },
+      {
+        "match_id": 537328,
+        "prediction": "1-1",
+        "actual": "2-1",
+        "points": 0
       }
     ]
   },
@@ -69,13 +115,19 @@
     "correct_winners": 1,
     "exact_scores": 0,
     "predictions_made": 7,
-    "games_played": 1,
+    "games_played": 2,
     "match_results": [
       {
         "match_id": 537327,
         "prediction": "5-2",
         "actual": "2-0",
         "points": 2
+      },
+      {
+        "match_id": 537328,
+        "prediction": "2-3",
+        "actual": "2-1",
+        "points": 0
       }
     ]
   },
@@ -85,13 +137,19 @@
     "correct_winners": 1,
     "exact_scores": 0,
     "predictions_made": 12,
-    "games_played": 1,
+    "games_played": 2,
     "match_results": [
       {
         "match_id": 537327,
         "prediction": "2-1",
         "actual": "2-0",
         "points": 2
+      },
+      {
+        "match_id": 537328,
+        "prediction": "0-10",
+        "actual": "2-1",
+        "points": 0
       }
     ]
   },
@@ -101,28 +159,18 @@
     "correct_winners": 0,
     "exact_scores": 0,
     "predictions_made": 12,
-    "games_played": 1,
+    "games_played": 2,
     "match_results": [
       {
         "match_id": 537327,
         "prediction": "1-1",
         "actual": "2-0",
         "points": 0
-      }
-    ]
-  },
-  {
-    "user": "Joanna E",
-    "total_points": 0,
-    "correct_winners": 0,
-    "exact_scores": 0,
-    "predictions_made": 4,
-    "games_played": 1,
-    "match_results": [
+      },
       {
-        "match_id": 537327,
-        "prediction": "1-2",
-        "actual": "2-0",
+        "match_id": 537328,
+        "prediction": "0-2",
+        "actual": "2-1",
         "points": 0
       }
     ]
@@ -133,12 +181,18 @@
     "correct_winners": 0,
     "exact_scores": 0,
     "predictions_made": 8,
-    "games_played": 1,
+    "games_played": 2,
     "match_results": [
       {
         "match_id": 537327,
         "prediction": "1-2",
         "actual": "2-0",
+        "points": 0
+      },
+      {
+        "match_id": 537328,
+        "prediction": "2-3",
+        "actual": "2-1",
         "points": 0
       }
     ]
