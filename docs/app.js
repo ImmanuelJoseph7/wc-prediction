@@ -179,6 +179,7 @@ document.querySelectorAll(".tab").forEach(btn => {
 function render() {
   renderPredict();
   renderLeaderboard();
+  renderBreakdown();
   renderResults();
 }
 
@@ -228,20 +229,33 @@ function renderLeaderboard() {
     ).join("");
     return `<tr><td>${medals[i] || i + 1}</td><td>${u.user}</td><td>${u.predictions_made}</td><td>${u.games_played || (u.match_results||[]).length}</td><td><strong>${u.total_points}</strong></td><td>${u.correct_winners}</td><td>${u.exact_scores}</td><td class="recent">${recent}</td></tr>`;
   }).join("");
+}
 
-  // Breakdown: show all finished match predictions once match has started
+function renderBreakdown() {
   const finished = matches.filter(m => m.status === "FINISHED").sort((a, b) => b.datetime.localeCompare(a.datetime));
-  const breakdown = document.getElementById("breakdown");
-  breakdown.innerHTML = finished.map(m => {
-    const preds = predictions.filter(p => p.match_id === m.id);
-    const rows = preds.map(p => {
-      const result = leaderboard.flatMap(u => u.match_results || []).find(r => r.match_id === m.id && leaderboard.find(lu => lu.user === p.user)?.match_results?.includes(r));
-      const pts = leaderboard.find(u => u.user === p.user)?.match_results?.find(r => r.match_id === m.id)?.points;
-      const cls = pts === 7 ? 'exact' : pts === 2 ? 'correct' : 'wrong';
-      return `<li class="pred-${cls}">${p.user}: ${p.home_score}-${p.away_score}</li>`;
-    }).join("");
-    return `<details><summary>${flag(m.home_team)} ${m.home_team} ${m.home_score}–${m.away_score} ${m.away_team} ${flag(m.away_team)}</summary><ul class="pred-list">${rows}</ul></details>`;
-  }).join("");
+  if (!finished.length) { document.getElementById("breakdown-wrap").innerHTML = "<p>No completed matches yet.</p>"; return; }
+
+  // Players sorted by points
+  const sorted = [...leaderboard].sort((a, b) => b.total_points - a.total_points);
+  const initials = sorted.map(u => u.user.split(" ").map(w => w[0]).join(""));
+
+  let html = '<table class="breakdown-table"><thead><tr><th>Game</th>';
+  html += sorted.map((u, i) => `<th title="${u.user}">${initials[i]}</th>`).join("");
+  html += '</tr></thead><tbody>';
+
+  for (const m of finished) {
+    html += `<tr><td class="game-cell">${flag(m.home_team)}<span class="abr">${m.home_score}–${m.away_score}</span>${flag(m.away_team)}</td>`;
+    for (const u of sorted) {
+      const p = predictions.find(pr => pr.user === u.user && pr.match_id === m.id);
+      if (!p) { html += '<td class="bd-cell bd-none">–</td>'; continue; }
+      const pts = u.match_results?.find(r => r.match_id === m.id)?.points;
+      const cls = pts === 7 ? 'bd-exact' : pts === 2 ? 'bd-correct' : 'bd-wrong';
+      html += `<td class="bd-cell ${cls}">${p.home_score}-${p.away_score}</td>`;
+    }
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  document.getElementById("breakdown-wrap").innerHTML = html;
 }
 
 function renderResults() {

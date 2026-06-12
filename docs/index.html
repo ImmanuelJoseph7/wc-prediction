@@ -13,6 +13,7 @@
     <nav>
       <button class="tab active" data-tab="predict">Predict</button>
       <button class="tab" data-tab="leaderboard">Leaderboard</button>
+      <button class="tab" data-tab="breakdown">Breakdown</button>
       <button class="tab" data-tab="results">Results</button>
     </nav>
 
@@ -58,8 +59,12 @@
       </table>
       <small class="table-legend">MP = Matches Predicted · GC = Games Completed · PTS = Points · ✓ = Correct Winner · 🎯 = Exact Score</small>
       </div>
-      <h3>Match Breakdown</h3>
-      <div id="breakdown"></div>
+    </section>
+
+    <!-- Breakdown tab -->
+    <section id="tab-breakdown" class="tab-content hidden">
+      <h2>Breakdown</h2>
+      <div class="table-wrap" id="breakdown-wrap"></div>
     </section>
 
     <!-- Results tab -->
