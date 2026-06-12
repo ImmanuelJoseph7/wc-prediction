@@ -196,5 +196,14 @@
         "points": 0
       }
     ]
+  },
+  {
+    "user": "Kevin R",
+    "total_points": 0,
+    "correct_winners": 0,
+    "exact_scores": 0,
+    "predictions_made": 7,
+    "games_played": 0,
+    "match_results": []
   }
 ]
