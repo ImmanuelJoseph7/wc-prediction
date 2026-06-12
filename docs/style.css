@@ -294,7 +294,7 @@ dialog input {
 .breakdown-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.8rem; background: transparent !important; }
 .breakdown-table th { padding: 0.4rem; text-align: center; border-bottom: 2px solid #ddd; color: #555; background: #f5f7fa !important; font-size: 0.75rem; }
 .breakdown-table td { padding: 0.4rem; text-align: center; border-bottom: 1px solid #eee; color: #222 !important; }
-.breakdown-table .game-cell { white-space: nowrap; text-align: left; font-weight: 600; font-size: 0.75rem; background: #f5f7fa !important; padding-right: 0.6rem; position: sticky; left: 0; z-index: 1; }
+.breakdown-table .game-cell { white-space: nowrap; text-align: left; font-weight: 600; font-size: 0.75rem; background: #f5f7fa !important; padding-right: 1rem; position: sticky; left: 0; z-index: 1; min-width: 5.5rem; }
 .breakdown-table th:first-child { position: sticky; left: 0; z-index: 2; background: #f5f7fa !important; }
 .breakdown-table .game-cell .abr { margin: 0 0.1rem; font-size: 0.7rem; }
 .bd-cell { border-radius: 3px; font-weight: 600; font-size: 0.75rem; white-space: nowrap; }
