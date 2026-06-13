@@ -39,9 +39,9 @@
     "group": "GROUP_D",
     "stage": "GROUP_STAGE",
     "datetime": "2026-06-13T01:00:00Z",
-    "status": "IN_PLAY",
-    "home_score": 2,
-    "away_score": 0
+    "status": "FINISHED",
+    "home_score": 4,
+    "away_score": 1
   },
   {
     "id": 537334,
