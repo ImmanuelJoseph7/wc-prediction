@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Predictions</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="container">
+    <h1>🔒 Upcoming Predictions</h1>
+    <dialog id="admin-login" open>
+      <article>
+        <h2>Admin Login</h2>
+        <input type="password" id="pin-input" placeholder="PIN" maxlength="4" pattern="\d{4}">
+        <button id="login-btn">Login</button>
+        <small id="login-error" class="error"></small>
+      </article>
+    </dialog>
+
+    <section id="admin-panel" class="hidden">
+      <div class="table-wrap" id="preds-wrap"></div>
+    </section>
+  </main>
+  <script>
+const REPO = "ImmanuelJoseph7/wc-prediction";
+const ADMIN_HASH = "41c991eb6a66242c0454191244278183ce58cf4a6bcd372f799e4b9cc01886af";
+const IS_LOCAL = location.hostname === "localhost" || location.hostname === "127.0.0.1";
+const FLAGS = {"Algeria":"dz","Argentina":"ar","Australia":"au","Austria":"at","Belgium":"be","Bosnia-Herzegovina":"ba","Brazil":"br","Canada":"ca","Cape Verde Islands":"cv","Colombia":"co","Congo DR":"cd","Croatia":"hr","Curaçao":"cw","Czechia":"cz","Ecuador":"ec","Egypt":"eg","England":"gb-eng","France":"fr","Germany":"de","Ghana":"gh","Haiti":"ht","Iran":"ir","Iraq":"iq","Ivory Coast":"ci","Japan":"jp","Jordan":"jo","Mexico":"mx","Morocco":"ma","Netherlands":"nl","New Zealand":"nz","Norway":"no","Panama":"pa","Paraguay":"py","Portugal":"pt","Qatar":"qa","Saudi Arabia":"sa","Scotland":"gb-sct","Senegal":"sn","South Africa":"za","South Korea":"kr","Spain":"es","Sweden":"se","Switzerland":"ch","Tunisia":"tn","Turkey":"tr","United States":"us","Uruguay":"uy","Uzbekistan":"uz"};
+const flag = (team) => { const c = FLAGS[team]; return c ? `<img src="https://flagcdn.com/16x12/${c}.png" alt="${team}" style="vertical-align:middle">` : ""; };
+
+async function hashPin(pin) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(pin));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function fetchJson(file) {
+  if (IS_LOCAL) return fetch(`/data/${file}`).then(r => r.json());
+  return fetch(`https://raw.githubusercontent.com/${REPO}/main/data/${file}?t=${Date.now()}`).then(r => r.json());
+}
+
+document.getElementById("login-btn").onclick = async () => {
+  const pin = document.getElementById("pin-input").value;
+  if ((await hashPin(pin)) !== ADMIN_HASH) {
+    document.getElementById("login-error").textContent = "Access denied.";
+    return;
+  }
+  document.getElementById("admin-login").close();
+  document.getElementById("admin-panel").classList.remove("hidden");
+  render();
+};
+
+async function render() {
+  const [matches, predictions, leaderboard] = await Promise.all([
+    fetchJson("matches.json"), fetchJson("predictions.json"), fetchJson("leaderboard.json")
+  ]);
+
+  const upcoming = matches.filter(m => m.status !== "FINISHED").sort((a, b) => a.datetime.localeCompare(b.datetime));
+  if (!upcoming.length) { document.getElementById("preds-wrap").innerHTML = "<p>No upcoming matches.</p>"; return; }
+
+  const sorted = [...leaderboard].sort((a, b) => b.total_points - a.total_points);
+  const initials = sorted.map(u => u.user.split(" ").map(w => w[0]).join(""));
+
+  let html = '<table class="breakdown-table"><thead><tr><th>Match</th>';
+  html += sorted.map((u, i) => `<th title="${u.user}">${initials[i]}</th>`).join("");
+  html += '</tr></thead><tbody>';
+
+  for (const m of upcoming) {
+    const dt = new Date(m.datetime).toLocaleDateString([], { day: 'numeric', month: 'short' });
+    html += `<tr><td class="game-cell">${flag(m.home_team)}<span class="abr"> v </span>${flag(m.away_team)} <small>${dt}</small></td>`;
+    for (const u of sorted) {
+      const p = predictions.find(pr => pr.user === u.user && pr.match_id === m.id);
+      if (!p) { html += '<td class="bd-cell bd-none">–</td>'; continue; }
+      html += `<td class="bd-cell">${p.home_score}-${p.away_score}</td>`;
+    }
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  document.getElementById("preds-wrap").innerHTML = html;
+}
+  </script>
+</body>
+</html>
