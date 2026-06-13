@@ -61,9 +61,9 @@
     "group": "GROUP_C",
     "stage": "GROUP_STAGE",
     "datetime": "2026-06-13T22:00:00Z",
-    "status": "TIMED",
-    "home_score": null,
-    "away_score": null
+    "status": "PAUSED",
+    "home_score": 1,
+    "away_score": 1
   },
   {
     "id": 537340,
