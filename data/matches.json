@@ -94,9 +94,9 @@
     "group": "GROUP_E",
     "stage": "GROUP_STAGE",
     "datetime": "2026-06-14T17:00:00Z",
-    "status": "TIMED",
-    "home_score": null,
-    "away_score": null
+    "status": "PAUSED",
+    "home_score": 3,
+    "away_score": 1
   },
   {
     "id": 537357,
@@ -116,7 +116,7 @@
     "group": "GROUP_E",
     "stage": "GROUP_STAGE",
     "datetime": "2026-06-14T23:00:00Z",
-    "status": "SCHEDULED",
+    "status": "TIMED",
     "home_score": null,
     "away_score": null
   },
