@@ -5,7 +5,7 @@
     "correct_winners": 4,
     "exact_scores": 2,
     "predictions_made": 12,
-    "games_played": 5,
+    "games_played": 6,
     "match_results": [
       {
         "match_id": 537327,
@@ -36,16 +36,22 @@
         "prediction": "0-1",
         "actual": "1-1",
         "points": 0
+      },
+      {
+        "match_id": 537339,
+        "prediction": "3-1",
+        "actual": "1-1",
+        "points": 0
       }
     ]
   },
   {
     "user": "Odelia J",
-    "total_points": 9,
-    "correct_winners": 2,
+    "total_points": 11,
+    "correct_winners": 3,
     "exact_scores": 1,
     "predictions_made": 15,
-    "games_played": 5,
+    "games_played": 6,
     "match_results": [
       {
         "match_id": 537327,
@@ -76,6 +82,12 @@
         "prediction": "1-1",
         "actual": "1-1",
         "points": 7
+      },
+      {
+        "match_id": 537339,
+        "prediction": "2-2",
+        "actual": "1-1",
+        "points": 2
       }
     ]
   },
@@ -85,7 +97,7 @@
     "correct_winners": 1,
     "exact_scores": 1,
     "predictions_made": 12,
-    "games_played": 5,
+    "games_played": 6,
     "match_results": [
       {
         "match_id": 537327,
@@ -116,6 +128,12 @@
         "prediction": "3-2",
         "actual": "1-1",
         "points": 0
+      },
+      {
+        "match_id": 537339,
+        "prediction": "2-1",
+        "actual": "1-1",
+        "points": 0
       }
     ]
   },
@@ -125,7 +143,7 @@
     "correct_winners": 3,
     "exact_scores": 0,
     "predictions_made": 12,
-    "games_played": 5,
+    "games_played": 6,
     "match_results": [
       {
         "match_id": 537327,
@@ -156,6 +174,12 @@
         "prediction": "1-2",
         "actual": "1-1",
         "points": 0
+      },
+      {
+        "match_id": 537339,
+        "prediction": "3-2",
+        "actual": "1-1",
+        "points": 0
       }
     ]
   },
@@ -165,7 +189,7 @@
     "correct_winners": 2,
     "exact_scores": 0,
     "predictions_made": 12,
-    "games_played": 5,
+    "games_played": 6,
     "match_results": [
       {
         "match_id": 537327,
@@ -196,6 +220,12 @@
         "prediction": "2-2",
         "actual": "1-1",
         "points": 2
+      },
+      {
+        "match_id": 537339,
+        "prediction": "4-2",
+        "actual": "1-1",
+        "points": 0
       }
     ]
   },
@@ -205,7 +235,7 @@
     "correct_winners": 1,
     "exact_scores": 0,
     "predictions_made": 10,
-    "games_played": 3,
+    "games_played": 4,
     "match_results": [
       {
         "match_id": 537327,
@@ -224,6 +254,12 @@
         "prediction": "0-3",
         "actual": "1-1",
         "points": 0
+      },
+      {
+        "match_id": 537339,
+        "prediction": "2-1",
+        "actual": "1-1",
+        "points": 0
       }
     ]
   },
@@ -233,7 +269,7 @@
     "correct_winners": 1,
     "exact_scores": 0,
     "predictions_made": 15,
-    "games_played": 5,
+    "games_played": 6,
     "match_results": [
       {
         "match_id": 537327,
@@ -264,6 +300,12 @@
         "prediction": "2-3",
         "actual": "1-1",
         "points": 0
+      },
+      {
+        "match_id": 537339,
+        "prediction": "4-1",
+        "actual": "1-1",
+        "points": 0
       }
     ]
   },
@@ -273,7 +315,7 @@
     "correct_winners": 1,
     "exact_scores": 0,
     "predictions_made": 10,
-    "games_played": 5,
+    "games_played": 6,
     "match_results": [
       {
         "match_id": 537327,
@@ -304,6 +346,12 @@
         "prediction": "0-2",
         "actual": "1-1",
         "points": 0
+      },
+      {
+        "match_id": 537339,
+        "prediction": "3-0",
+        "actual": "1-1",
+        "points": 0
       }
     ]
   },
@@ -313,7 +361,7 @@
     "correct_winners": 1,
     "exact_scores": 0,
     "predictions_made": 12,
-    "games_played": 5,
+    "games_played": 6,
     "match_results": [
       {
         "match_id": 537327,
@@ -344,6 +392,12 @@
         "prediction": "0-3",
         "actual": "1-1",
         "points": 0
+      },
+      {
+        "match_id": 537339,
+        "prediction": "3-1",
+        "actual": "1-1",
+        "points": 0
       }
     ]
   },
@@ -353,7 +407,7 @@
     "correct_winners": 0,
     "exact_scores": 0,
     "predictions_made": 10,
-    "games_played": 3,
+    "games_played": 4,
     "match_results": [
       {
         "match_id": 537333,
@@ -370,6 +424,12 @@
       {
         "match_id": 537334,
         "prediction": "0-2",
+        "actual": "1-1",
+        "points": 0
+      },
+      {
+        "match_id": 537339,
+        "prediction": "1-0",
         "actual": "1-1",
         "points": 0
       }
