@@ -72,9 +72,9 @@
     "group": "GROUP_C",
     "stage": "GROUP_STAGE",
     "datetime": "2026-06-14T01:00:00Z",
-    "status": "IN_PLAY",
+    "status": "PAUSED",
     "home_score": 0,
-    "away_score": 0
+    "away_score": 1
   },
   {
     "id": 537346,
