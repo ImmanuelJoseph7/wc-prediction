@@ -29,8 +29,8 @@
     "stage": "GROUP_STAGE",
     "datetime": "2026-06-12T19:00:00Z",
     "status": "FINISHED",
-    "home_score": null,
-    "away_score": null
+    "home_score": 1,
+    "away_score": 1
   },
   {
     "id": 537345,

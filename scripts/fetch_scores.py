@@ -33,9 +33,12 @@ def main():
                     match["away_score"] != new_away or
                     match["home_team"] != new_home_team or
                     match["away_team"] != new_away_team):
+                # Never overwrite existing scores with null
+                if match["home_score"] is not None and new_home is None:
+                    continue
                 match["status"] = new_status
-                match["home_score"] = new_home
-                match["away_score"] = new_away
+                match["home_score"] = new_home if new_home is not None else match["home_score"]
+                match["away_score"] = new_away if new_away is not None else match["away_score"]
                 match["home_team"] = new_home_team
                 match["away_team"] = new_away_team
                 changed = True
