@@ -83,8 +83,8 @@
     "group": "GROUP_D",
     "stage": "GROUP_STAGE",
     "datetime": "2026-06-14T04:00:00Z",
-    "status": "IN_PLAY",
-    "home_score": 1,
+    "status": "FINISHED",
+    "home_score": 2,
     "away_score": 0
   },
   {
