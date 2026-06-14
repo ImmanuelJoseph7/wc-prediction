@@ -609,55 +609,6 @@
     "submitted_at": "2026-06-13T23:08:30.484835+00:00"
   },
   {
-    "user": "Odelia J",
-    "match_id": 537351,
-    "home_score": 5,
-    "away_score": 5,
-    "submitted_at": "2026-06-13T23:08:30.484838+00:00"
-  },
-  {
-    "user": "Odelia J",
-    "match_id": 537357,
-    "home_score": 6,
-    "away_score": 5,
-    "submitted_at": "2026-06-13T23:08:30.484840+00:00"
-  },
-  {
-    "user": "Odelia J",
-    "match_id": 537352,
-    "home_score": 8,
-    "away_score": 5,
-    "submitted_at": "2026-06-13T23:08:30.484841+00:00"
-  },
-  {
-    "user": "Odelia J",
-    "match_id": 537358,
-    "home_score": 9,
-    "away_score": 1,
-    "submitted_at": "2026-06-13T23:08:30.484843+00:00"
-  },
-  {
-    "user": "Odelia J",
-    "match_id": 537369,
-    "home_score": 5,
-    "away_score": 0,
-    "submitted_at": "2026-06-13T23:08:30.484845+00:00"
-  },
-  {
-    "user": "Odelia J",
-    "match_id": 537363,
-    "home_score": 1,
-    "away_score": 2,
-    "submitted_at": "2026-06-13T23:08:30.484846+00:00"
-  },
-  {
-    "user": "Odelia J",
-    "match_id": 537370,
-    "home_score": 1,
-    "away_score": 5,
-    "submitted_at": "2026-06-13T23:08:30.484848+00:00"
-  },
-  {
     "user": "Samuel G",
     "match_id": 537346,
     "home_score": 1,
@@ -999,5 +950,61 @@
     "home_score": 2,
     "away_score": 0,
     "submitted_at": "2026-06-14T07:08:54.493051+00:00"
+  },
+  {
+    "user": "Odelia J",
+    "match_id": 537351,
+    "home_score": 5,
+    "away_score": 5,
+    "submitted_at": "2026-06-14T08:49:50.346765+00:00"
+  },
+  {
+    "user": "Odelia J",
+    "match_id": 537357,
+    "home_score": 6,
+    "away_score": 5,
+    "submitted_at": "2026-06-14T08:49:50.346770+00:00"
+  },
+  {
+    "user": "Odelia J",
+    "match_id": 537352,
+    "home_score": 8,
+    "away_score": 5,
+    "submitted_at": "2026-06-14T08:49:50.346773+00:00"
+  },
+  {
+    "user": "Odelia J",
+    "match_id": 537358,
+    "home_score": 9,
+    "away_score": 1,
+    "submitted_at": "2026-06-14T08:49:50.346775+00:00"
+  },
+  {
+    "user": "Odelia J",
+    "match_id": 537369,
+    "home_score": 1,
+    "away_score": 3,
+    "submitted_at": "2026-06-14T08:49:50.346777+00:00"
+  },
+  {
+    "user": "Odelia J",
+    "match_id": 537363,
+    "home_score": 0,
+    "away_score": 2,
+    "submitted_at": "2026-06-14T08:49:50.346779+00:00"
+  },
+  {
+    "user": "Odelia J",
+    "match_id": 537370,
+    "home_score": 3,
+    "away_score": 9,
+    "submitted_at": "2026-06-14T08:49:50.346780+00:00"
+  },
+  {
+    "user": "Odelia J",
+    "match_id": 537364,
+    "home_score": 2,
+    "away_score": 1,
+    "submitted_at": "2026-06-14T08:49:50.346782+00:00"
   }
 ]
