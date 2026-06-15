@@ -2,20 +2,15 @@
 
 ## Overview
 
-A static web app hosted on GitHub Pages where 4 family members (Dad, Mum, Boy, Girl) predict FIFA World Cup 2026 match scores. GitHub Actions handles backend logic. Data lives as JSON files in the repo. Zero cost, zero servers.
+A web app hosted on GitHub Pages where family members predict FIFA World Cup 2026 match scores. Data lives in Supabase (Postgres). Score fetching runs via a lightweight GitHub Action. Zero cost.
 
 ---
 
 ## Users
 
-| User | PIN |
-|------|-----|
-| Dad  | Set on first use |
-| Mum  | Set on first use |
-| Boy  | Set on first use |
-| Girl | Set on first use |
-
-On first visit, each user selects their name and creates a 4-digit PIN. PIN is stored in `data/users.json`. Subsequent visits require name + PIN to access.
+- Dynamic registration: any family member can register with "First Name + Last Initial" format and a 4-digit PIN
+- PIN stored as SHA-256 hash in the database
+- Currently 10 players
 
 ---
 
@@ -23,147 +18,93 @@ On first visit, each user selects their name and creates a 4-digit PIN. PIN is s
 
 | Outcome | Points |
 |---------|--------|
+| Exact score correct | 7 |
 | Correct winner/draw outcome, wrong score | 2 |
-| Exact score correct (includes winner bonus) | 7 (5 + 2) |
 | Wrong outcome | 0 |
-
-Examples:
-- Match result: Brazil 2–1 Germany
-  - Prediction 2–1 → 7 pts (exact score + correct winner)
-  - Prediction 3–0 → 2 pts (correct winner, wrong score)
-  - Prediction 1–1 → 0 pts (wrong outcome)
-- Match result: 1–1 draw
-  - Prediction 1–1 → 7 pts
-  - Prediction 0–0 → 2 pts (correct outcome = draw)
-  - Prediction 2–1 → 0 pts
 
 ---
 
 ## Features
 
 ### Prediction Submission
-- User selects their name, enters PIN
-- Sees list of upcoming matches with score inputs (home goals / away goals)
-- Submits predictions
-- Submission triggers a GitHub Actions workflow_dispatch that writes to `data/predictions.json`
-- Predictions are hidden from other users until match kicks off
+- User logs in with name + PIN
+- Sees upcoming matches (next 48 hours) with score inputs
+- Confirmation popup before submit
+- Predictions written instantly to Supabase (upsert)
+- Predictions visible to others only after match kicks off (via Breakdown tab)
 
 ### Prediction Locking
-- Predictions lock at match kickoff time
-- Frontend hides prediction form for started/completed matches
-- Backend rejects any late submissions
+- Frontend only shows matches that haven't started yet
+- Once kickoff passes, the match disappears from the predict tab
 
 ### Live Scores
-- GitHub Action runs every 15 minutes during match days
+- GitHub Action runs every ~45 minutes
 - Fetches results from football-data.org free API
-- Updates `data/matches.json` with final scores
-- Triggers points calculation
+- PATCHes scores directly to Supabase
+- Updates `metadata.scores_fetched_at` timestamp
+- Guard: never overwrites existing scores with null (API glitch protection)
 
 ### Leaderboard
-- Auto-calculated after each score update
-- Shows: rank, name, total points, correct winners, exact scores
-- Per-match breakdown: who predicted what, actual result, points earned
+- Computed client-side from live Supabase data
+- Shows: rank, name, MP (matches predicted), GC (games completed), PTS, correct winners, exact scores, recent form dots
+- Legend at bottom explains abbreviations
+
+### Breakdown Tab
+- Matrix view: games as rows (most recent first), players as columns (sorted by points)
+- Color-coded cells: green (exact), yellow (correct winner), red (wrong)
+- Sticky game column with horizontal scroll for player columns
+
+### Results Tab
+- Completed matches with scores, grid layout (home - score - away)
 
 ### Admin
-- Repository owner (Dad) can edit JSON files directly in GitHub to correct/adjust anything
-- Push triggers GitHub Pages rebuild
+- Admin link visible only to Immanuel J after login
+- `admin-preds.html`: matrix of all upcoming predictions (PIN protected)
+- `admin.html`: manual score entry (legacy, reads from GitHub — to be updated)
+- Database editable directly via Supabase dashboard/SQL editor
 
 ---
 
 ## Architecture
 
 ```
-GitHub Repository: family-wc-predictor
+GitHub Pages (frontend)
 │
-├── docs/                        ← GitHub Pages root
-│   ├── index.html               ← Single-page app
-│   ├── app.js                   ← All frontend logic
-│   └── style.css                ← Football-themed clean styling
-│
-├── data/
-│   ├── matches.json             ← FIFA 2026 schedule + results
-│   ├── predictions.json         ← All user predictions
-│   ├── leaderboard.json         ← Calculated standings
-│   └── users.json               ← User PINs (hashed)
+├── docs/
+│   ├── index.html               ← Main app (tabs: Predict, Leaderboard, Breakdown, Results)
+│   ├── app.js                   ← Frontend logic, reads/writes Supabase directly
+│   ├── style.css                ← Football-themed styling (PicoCSS + custom)
+│   ├── admin-preds.html         ← Admin: view all upcoming predictions
+│   └── admin.html               ← Admin: manual score entry (legacy)
 │
 ├── scripts/
-│   ├── fetch_scores.py          ← Pull results from football-data.org
-│   ├── calculate.py             ← Scoring engine → leaderboard.json
-│   └── seed_matches.py          ← One-time: populate match schedule
+│   └── fetch_scores.py          ← Fetches scores from API → PATCHes Supabase
 │
 ├── .github/workflows/
-│   ├── fetch-scores.yml         ← Scheduled: every 15 min on match days
-│   └── submit-prediction.yml    ← workflow_dispatch: accept predictions
+│   └── fetch-scores.yml         ← Scheduled: every 45 min (only active workflow)
 │
-├── requirements.txt
-└── README.md
+├── data/                        ← Legacy JSON files (frozen snapshot, no longer used)
+│
+└── .env                         ← Local dev secrets (gitignored)
+
+
+Supabase (database + REST API)
+│
+├── users (name, pin_hash, created_at)
+├── matches (id, home_team, away_team, group_name, stage, kickoff, status, home_score, away_score)
+├── predictions (user_name, match_id, home_score, away_score, submitted_at) [UNIQUE: user_name + match_id]
+└── metadata (key, value) → stores scores_fetched_at timestamp
 ```
 
 ---
 
-## Data Schemas
+## Data Flow
 
-### matches.json
-```json
-[
-  {
-    "id": 1,
-    "home_team": "Mexico",
-    "away_team": "Canada",
-    "group": "A",
-    "stage": "Group",
-    "datetime": "2026-06-11T18:00:00Z",
-    "status": "SCHEDULED|IN_PLAY|FINISHED",
-    "home_score": null,
-    "away_score": null
-  }
-]
-```
-
-### predictions.json
-```json
-[
-  {
-    "user": "Dad",
-    "match_id": 1,
-    "home_score": 2,
-    "away_score": 1,
-    "submitted_at": "2026-06-10T12:00:00Z"
-  }
-]
-```
-
-### leaderboard.json
-```json
-[
-  {
-    "user": "Dad",
-    "total_points": 14,
-    "correct_winners": 3,
-    "exact_scores": 1,
-    "predictions_made": 10,
-    "match_results": [
-      {
-        "match_id": 1,
-        "prediction": "2-1",
-        "actual": "2-1",
-        "points": 7
-      }
-    ]
-  }
-]
-```
-
-### users.json
-```json
-[
-  {
-    "name": "Dad",
-    "pin_hash": "sha256_hash_here",
-    "created_at": "2026-06-08T10:00:00Z"
-  }
-]
-```
+1. **Predictions:** Browser → Supabase REST API (instant upsert)
+2. **Registration:** Browser → Supabase REST API (instant insert)
+3. **Reading data:** Browser → Supabase REST API (anon key, RLS enforced)
+4. **Score updates:** GitHub Action → football-data.org API → Supabase REST API (service_role key)
+5. **Leaderboard:** Computed client-side from matches + predictions data
 
 ---
 
@@ -171,98 +112,79 @@ GitHub Repository: family-wc-predictor
 
 | Component | Technology |
 |-----------|-----------|
-| Frontend | Vanilla HTML + CSS + JavaScript (single page) |
-| Styling | Pico CSS (lightweight) + custom football theme |
-| Backend | Python scripts executed by GitHub Actions |
-| Data | JSON files committed to repository |
+| Frontend | Vanilla HTML + CSS + JavaScript (single page, tabbed) |
+| Styling | Pico CSS + custom overrides |
+| Database | Supabase (Postgres) — free tier |
+| API | Supabase REST API (auto-generated from schema) |
+| Score Fetcher | Python script on GitHub Actions cron |
 | Hosting | GitHub Pages (served from `/docs`) |
-| Score API | football-data.org (free tier, 10 req/min) |
-| CI/CD | GitHub Actions |
+| Score Source | football-data.org (free tier) |
 
 ---
 
-## Workflow Details
+## Security
 
-### fetch-scores.yml
-- **Trigger:** Cron schedule every 15 minutes (active during tournament: June 11 – July 19, 2026)
-- **Steps:**
-  1. Checkout repo
-  2. Setup Python
-  3. Install requirements
-  4. Run `fetch_scores.py` (uses secret `FOOTBALL_API_KEY`)
-  5. Run `calculate.py`
-  6. Commit & push updated JSON files (if changed)
-
-### submit-prediction.yml
-- **Trigger:** workflow_dispatch with inputs: `user`, `pin`, `predictions` (JSON string)
-- **Steps:**
-  1. Checkout repo
-  2. Validate PIN against `users.json`
-  3. Validate no predictions are for matches already started
-  4. Merge new predictions into `predictions.json`
-  5. Run `calculate.py` (in case past results exist)
-  6. Commit & push
+- **Anon key** (public, in frontend): allows reads + prediction inserts/updates via RLS policies
+- **Service_role key** (secret, in GitHub Action): bypasses RLS for score updates
+- **RLS policies:** all tables readable by anyone; predictions insertable/updatable by anyone; matches only updatable by service_role
+- **PIN auth:** checked client-side against stored hash (simple family game, not high-security)
 
 ---
 
-## Frontend Design
+## Secrets
 
-### Theme
-- Football-themed, clean design
-- Green pitch colours (#1B5E20 dark green, #4CAF50 main green, #E8F5E9 light)
-- White cards on subtle green background
-- Clean sans-serif font
-- Responsive (works on phone for the kids)
-
-### Pages (single page, tabbed or sectioned)
-1. **Login** — Pick name from dropdown, enter/create PIN
-2. **Predict** — Upcoming matches, score inputs, submit button
-3. **Leaderboard** — Rankings table + per-match breakdown
-4. **Results** — Completed matches with scores
-
----
-
-## Secrets Required (GitHub Repo Settings)
-
+### GitHub Repository Secrets
 | Secret | Purpose |
 |--------|---------|
 | `FOOTBALL_API_KEY` | football-data.org API key |
-| `ACTIONS_PAT` | Personal access token (for Actions to push commits & trigger workflow_dispatch from frontend) |
+| `SUPABASE_URL` | Supabase project URL |
+| `SUPABASE_SERVICE_KEY` | Service role key (bypasses RLS) |
+
+### No longer needed
+- `ACTIONS_PAT` — was used for workflow_dispatch from frontend (removed)
 
 ---
 
-## Setup Steps
+## Supabase Project
 
-1. Create GitHub repo `family-wc-predictor`
-2. Enable GitHub Pages from `/docs` folder (main branch)
-3. Register at https://www.football-data.org/client/register → get API key
-4. Create a GitHub Personal Access Token with `repo` and `actions` scope
-5. Add both as repository secrets
-6. Run `seed_matches.py` once to populate `data/matches.json` with FIFA 2026 schedule
-7. Share the GitHub Pages URL with family
+- **URL:** https://mxmaedzsfvrugdmcjzri.supabase.co
+- **Region:** (as configured)
+- **Free tier limits:** 500 MB storage, unlimited API requests
 
 ---
 
-## Future Enhancements (not in v1)
+## GitHub Actions Usage
 
-- ADLS sync (nightly GitHub Action uploads JSON to Azure Data Lake)
-- Delta table format for reporting in Databricks/Synapse
-- Bonus predictions (tournament winner, golden boot, etc.)
+After Supabase migration:
+- Only `fetch-scores.yml` runs (~45 min intervals)
+- No git commits = no Pages deployments triggered
+- Each run: ~10 seconds, billed as 1 minute
+- Estimated: ~30 min/month (vs ~300+ previously)
+
+---
+
+## Disabled Workflows
+- `submit-prediction.yml` — replaced by direct Supabase writes
+- `register-user.yml` — replaced by direct Supabase writes
+- `admin-scores.yml` — replaced by Supabase dashboard or admin page
+
+---
+
+## Setup Steps (for fresh deploy)
+
+1. Create Supabase project → run schema SQL
+2. Create GitHub repo, push code
+3. Enable GitHub Pages from `/docs` on `main`
+4. Add secrets: `FOOTBALL_API_KEY`, `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`
+5. Seed matches from football-data.org API
+6. Share the GitHub Pages URL
+
+---
+
+## Future Enhancements
+
+- Update `admin.html` to use Supabase (currently legacy)
+- Bonus predictions (tournament winner, golden boot)
+- Push notifications / auto-refresh when scores update
+- Supabase Edge Function to replace GitHub Action for score fetching (fully serverless)
 - Group stage standings predictions
-- Push notifications when results come in
-
----
-
-## Constraints & Limitations
-
-- Prediction submission has slight delay (GitHub Actions takes ~30s to run)
-- Score updates are near-real-time (15 min lag max)
-- Max 4 users hardcoded (trivial to add more later)
-- football-data.org free tier: 10 requests/min — more than sufficient
-- GitHub Actions free tier: 2000 min/month — this uses ~5 min/day max
-
----
-
-## Timeline
-
-FIFA 2026 runs June 11 – July 19, 2026. App should be deployed and tested before June 11.
