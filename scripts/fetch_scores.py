@@ -47,8 +47,9 @@ def main():
     print(f"Updated {updated} match(es)." if updated else "No changes.")
 
     # Update last fetched timestamp
+    from datetime import datetime, timezone
     requests.patch(f"{SUPABASE_URL}/rest/v1/metadata?key=eq.scores_fetched_at",
-                   headers=HEADERS, json={"value": __import__('datetime').datetime.utcnow().isoformat() + "Z"})
+                   headers=HEADERS, json={"value": datetime.now(timezone.utc).isoformat()})
 
 
 if __name__ == "__main__":
