@@ -280,6 +280,8 @@ document.getElementById("submit-preds").onclick = async () => {
 
   if (!preds.length) { document.getElementById("submit-status").textContent = "Enter at least one prediction."; return; }
 
+  if (!confirm(`Submit ${preds.length} prediction(s)? You can't undo this.`)) return;
+
   const status = document.getElementById("submit-status");
   btn.disabled = true;
   btn.textContent = "Submitting…";
@@ -295,14 +297,14 @@ document.getElementById("submit-preds").onclick = async () => {
 
   // Upsert predictions to Supabase
   const rows = preds.map(p => ({user_name: currentUser, match_id: p.match_id, home_score: p.home_score, away_score: p.away_score, submitted_at: new Date().toISOString()}));
-  const resp = await fetch(`${SUPABASE_URL}/rest/v1/predictions`, {
+  const resp = await fetch(`${SUPABASE_URL}/rest/v1/predictions?on_conflict=user_name,match_id`, {
     method: "POST",
     headers: {...HEADERS, "Content-Type": "application/json", "Prefer": "return=minimal,resolution=merge-duplicates"},
     body: JSON.stringify(rows)
   });
 
   if (resp.ok) {
-    status.textContent = `✓ Saved ${preds.length} prediction(s)!`;
+    alert(`✓ Saved ${preds.length} prediction(s)!`);
     await loadData();
     render();
   } else {
