@@ -157,11 +157,15 @@ document.querySelectorAll(".tab").forEach(btn => {
 
 // Render
 function render() {
-  const t = new Date().toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-  const txt = `Updated: ${t}`;
-  document.getElementById("last-updated").textContent = txt;
-  document.getElementById("last-updated-bd").textContent = txt;
-  document.getElementById("last-updated-res").textContent = txt;
+  sb("metadata", "key=eq.scores_fetched_at&select=value").then(r => {
+    if (r.length) {
+      const t = new Date(r[0].value).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+      const txt = `Scores updated: ${t}`;
+      document.getElementById("last-updated").textContent = txt;
+      document.getElementById("last-updated-bd").textContent = txt;
+      document.getElementById("last-updated-res").textContent = txt;
+    }
+  });
   renderPredict();
   renderLeaderboard();
   renderBreakdown();
