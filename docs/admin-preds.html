@@ -27,9 +27,10 @@
     </section>
   </main>
   <script>
-const REPO = "ImmanuelJoseph7/wc-prediction";
+const SUPABASE_URL = "https://mxmaedzsfvrugdmcjzri.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im14bWFlZHpzZnZydWdkbWNqenJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MDU2NjEsImV4cCI6MjA5NzA4MTY2MX0.KHm7x2Huxi1JPeGZPfxLY6AIIIl6c4bbkXz4fxWBnYk";
+const HEADERS = {"apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}`};
 const ADMIN_HASH = "41c991eb6a66242c0454191244278183ce58cf4a6bcd372f799e4b9cc01886af";
-const IS_LOCAL = location.hostname === "localhost" || location.hostname === "127.0.0.1";
 const FLAGS = {"Algeria":"dz","Argentina":"ar","Australia":"au","Austria":"at","Belgium":"be","Bosnia-Herzegovina":"ba","Brazil":"br","Canada":"ca","Cape Verde Islands":"cv","Colombia":"co","Congo DR":"cd","Croatia":"hr","Curaçao":"cw","Czechia":"cz","Ecuador":"ec","Egypt":"eg","England":"gb-eng","France":"fr","Germany":"de","Ghana":"gh","Haiti":"ht","Iran":"ir","Iraq":"iq","Ivory Coast":"ci","Japan":"jp","Jordan":"jo","Mexico":"mx","Morocco":"ma","Netherlands":"nl","New Zealand":"nz","Norway":"no","Panama":"pa","Paraguay":"py","Portugal":"pt","Qatar":"qa","Saudi Arabia":"sa","Scotland":"gb-sct","Senegal":"sn","South Africa":"za","South Korea":"kr","Spain":"es","Sweden":"se","Switzerland":"ch","Tunisia":"tn","Turkey":"tr","United States":"us","Uruguay":"uy","Uzbekistan":"uz"};
 const flag = (team) => { const c = FLAGS[team]; return c ? `<img src="https://flagcdn.com/16x12/${c}.png" alt="${team}" style="vertical-align:middle">` : ""; };
 
@@ -38,9 +39,9 @@ async function hashPin(pin) {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
-async function fetchJson(file) {
-  if (IS_LOCAL) return fetch(`/data/${file}`).then(r => r.json());
-  return fetch(`https://raw.githubusercontent.com/${REPO}/main/data/${file}?t=${Date.now()}`).then(r => r.json());
+async function sb(table, query = "") {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, {headers: HEADERS});
+  return r.json();
 }
 
 document.getElementById("login-btn").onclick = async () => {
@@ -55,26 +56,29 @@ document.getElementById("login-btn").onclick = async () => {
 };
 
 async function render() {
-  let [matches, predictions, leaderboard] = await Promise.all([
-    fetchJson("matches.json"), fetchJson("predictions.json"), fetchJson("leaderboard.json")
+  const [matchesRaw, predsRaw, usersRaw] = await Promise.all([
+    sb("matches", "select=*&order=kickoff.asc"),
+    sb("predictions", "select=*"),
+    sb("users", "select=name")
   ]);
-  if (leaderboard.standings) leaderboard = leaderboard.standings;
+  const matches = matchesRaw.map(r => ({id: r.id, home_team: r.home_team, away_team: r.away_team, datetime: r.kickoff, status: r.status}));
+  const predictions = predsRaw.map(r => ({user: r.user_name, match_id: r.match_id, home_score: r.home_score, away_score: r.away_score}));
 
   const upcoming = matches.filter(m => m.status !== "FINISHED").sort((a, b) => a.datetime.localeCompare(b.datetime));
   if (!upcoming.length) { document.getElementById("preds-wrap").innerHTML = "<p>No upcoming matches.</p>"; return; }
 
-  const sorted = [...leaderboard].sort((a, b) => b.total_points - a.total_points);
-  const initials = sorted.map(u => u.user.split(" ").map(w => w[0]).join(""));
+  const users = usersRaw.map(u => u.name).sort();
+  const initials = users.map(u => u.split(" ").map(w => w[0]).join(""));
 
   let html = '<table class="breakdown-table"><thead><tr><th>Match</th>';
-  html += sorted.map((u, i) => `<th title="${u.user}">${initials[i]}</th>`).join("");
+  html += users.map((u, i) => `<th title="${u}">${initials[i]}</th>`).join("");
   html += '</tr></thead><tbody>';
 
   for (const m of upcoming) {
     const dt = new Date(m.datetime).toLocaleDateString([], { day: 'numeric', month: 'short' });
     html += `<tr><td class="game-cell">${flag(m.home_team)}<span class="abr"> v </span>${flag(m.away_team)} <small>${dt}</small></td>`;
-    for (const u of sorted) {
-      const p = predictions.find(pr => pr.user === u.user && pr.match_id === m.id);
+    for (const u of users) {
+      const p = predictions.find(pr => pr.user === u && pr.match_id === m.id);
       if (!p) { html += '<td class="bd-cell bd-none">–</td>'; continue; }
       html += `<td class="bd-cell">${p.home_score}-${p.away_score}</td>`;
     }

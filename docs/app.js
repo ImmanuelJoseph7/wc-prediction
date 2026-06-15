@@ -1,5 +1,6 @@
-const REPO = "ImmanuelJoseph7/wc-prediction";
-const IS_LOCAL = location.hostname === "localhost" || location.hostname === "127.0.0.1";
+const SUPABASE_URL = "https://mxmaedzsfvrugdmcjzri.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im14bWFlZHpzZnZydWdkbWNqenJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MDU2NjEsImV4cCI6MjA5NzA4MTY2MX0.KHm7x2Huxi1JPeGZPfxLY6AIIIl6c4bbkXz4fxWBnYk";
+const HEADERS = {"apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}`};
 
 const FLAGS = {
   "Algeria":"dz","Argentina":"ar","Australia":"au","Austria":"at","Belgium":"be",
@@ -18,13 +19,6 @@ const flag = (team) => {
   const code = FLAGS[team];
   return code ? `<img src="https://flagcdn.com/24x18/${code}.png" alt="${team}" style="vertical-align:middle;margin:0 4px">` : "";
 };
-const DATA_BASE = IS_LOCAL ? "/data" : `https://raw.githubusercontent.com/${REPO}/main/data`;
-const API_BASE = `https://api.github.com/repos/${REPO}/actions/workflows/submit-prediction.yml/dispatches`;
-
-function dataUrl(file) {
-  if (IS_LOCAL) return `/data/${file}`;
-  return `https://api.github.com/repos/${REPO}/contents/data/${file}`;
-}
 
 let currentUser = sessionStorage.getItem("wc_user");
 let currentPin = sessionStorage.getItem("wc_pin");
@@ -33,20 +27,18 @@ let predictions = [];
 let leaderboard = [];
 let users = [];
 
-// Populate user select from users.json
-async function populateUserSelect() {
-  const fetchJson = (file) => {
-    if (IS_LOCAL) return fetch(`/data/${file}`).then(r => r.json());
-    return fetch(`https://raw.githubusercontent.com/${REPO}/main/data/${file}?t=${Date.now()}`).then(r => r.json());
-  };
-  const u = await fetchJson("users.json");
-  const sel = document.getElementById("user-select");
-  sel.innerHTML = '<option value="">Pick your name…</option>';
-  u.forEach(user => { sel.innerHTML += `<option>${user.name}</option>`; });
-  users = u;
+async function sb(table, query = "") {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, {headers: HEADERS});
+  return r.json();
 }
 
-// Auto-login if session exists
+async function populateUserSelect() {
+  users = await sb("users", "select=name,pin_hash");
+  const sel = document.getElementById("user-select");
+  sel.innerHTML = '<option value="">Pick your name…</option>';
+  users.forEach(u => { sel.innerHTML += `<option>${u.name}</option>`; });
+}
+
 (async () => {
   if (currentUser && currentPin) {
     await loadData();
@@ -57,33 +49,41 @@ async function populateUserSelect() {
   }
 })();
 
-let lastUpdated = null;
-
-// Data fetching
 async function loadData() {
-  const fetchJson = (file) => {
-    if (IS_LOCAL) return fetch(`/data/${file}`).then(r => r.json());
-    return fetch(`https://raw.githubusercontent.com/${REPO}/main/data/${file}?t=${Date.now()}`).then(r => r.json());
-  };
-  [matches, predictions, leaderboard, users] = await Promise.all([
-    fetchJson("matches.json"),
-    fetchJson("predictions.json"),
-    fetchJson("leaderboard.json"),
-    fetchJson("users.json"),
+  const [m, p, u] = await Promise.all([
+    sb("matches", "select=*&order=kickoff.asc"),
+    sb("predictions", "select=*"),
+    sb("users", "select=name,pin_hash"),
   ]);
-  // Handle new format with last_updated
-  if (leaderboard.standings) {
-    lastUpdated = leaderboard.last_updated;
-    leaderboard = leaderboard.standings;
-  }
-  if (IS_LOCAL) {
-    const localPreds = JSON.parse(localStorage.getItem("wc_local_preds") || "[]");
-    for (const lp of localPreds) {
-      const idx = predictions.findIndex(p => p.user === lp.user && p.match_id === lp.match_id);
-      if (idx >= 0) predictions[idx] = lp;
-      else predictions.push(lp);
+  matches = m.map(r => ({id: r.id, home_team: r.home_team, away_team: r.away_team, group: r.group_name, stage: r.stage, datetime: r.kickoff, status: r.status, home_score: r.home_score, away_score: r.away_score}));
+  predictions = p.map(r => ({user: r.user_name, match_id: r.match_id, home_score: r.home_score, away_score: r.away_score, submitted_at: r.submitted_at}));
+  users = u;
+  computeLeaderboard();
+}
+
+function computeLeaderboard() {
+  const finished = matches.filter(m => m.status === "FINISHED" && m.home_score !== null);
+  const stats = {};
+  users.forEach(u => { stats[u.name] = {user: u.name, total_points: 0, correct_winners: 0, exact_scores: 0, predictions_made: 0, games_played: 0, match_results: []}; });
+
+  for (const u of users) {
+    const userPreds = predictions.filter(p => p.user === u.name);
+    stats[u.name].predictions_made = userPreds.length;
+    for (const p of userPreds) {
+      const m = finished.find(fm => fm.id === p.match_id);
+      if (!m) continue;
+      stats[u.name].games_played++;
+      let pts = 0;
+      if (p.home_score === m.home_score && p.away_score === m.away_score) {
+        pts = 7; stats[u.name].exact_scores++; stats[u.name].correct_winners++;
+      } else if (Math.sign(p.home_score - p.away_score) === Math.sign(m.home_score - m.away_score)) {
+        pts = 2; stats[u.name].correct_winners++;
+      }
+      stats[u.name].total_points += pts;
+      stats[u.name].match_results.push({match_id: p.match_id, prediction: `${p.home_score}-${p.away_score}`, actual: `${m.home_score}-${m.away_score}`, points: pts});
     }
   }
+  leaderboard = Object.values(stats).sort((a, b) => b.total_points - a.total_points);
 }
 
 // Auth
@@ -101,13 +101,8 @@ document.getElementById("login-btn").onclick = async () => {
   await loadData();
   const hash = await hashPin(pin);
   const existing = users.find(u => u.name === name);
-
-  if (existing) {
-    if (existing.pin_hash !== hash) { err.textContent = "Wrong PIN."; return; }
-  } else {
-    err.textContent = "User not found. Please try again in a moment.";
-    return;
-  }
+  if (!existing) { err.textContent = "User not found."; return; }
+  if (existing.pin_hash !== hash) { err.textContent = "Wrong PIN."; return; }
 
   currentUser = name;
   currentPin = pin;
@@ -136,40 +131,18 @@ document.getElementById("register-btn").onclick = async () => {
   btn.textContent = "Registering…";
   const hash = await hashPin(pin);
 
-  if (IS_LOCAL) {
-    users.push({ name, pin_hash: hash, created_at: new Date().toISOString() });
+  const resp = await fetch(`${SUPABASE_URL}/rest/v1/users`, {
+    method: "POST", headers: {...HEADERS, "Content-Type": "application/json", "Prefer": "return=minimal"},
+    body: JSON.stringify({name, pin_hash: hash})
+  });
+  if (resp.ok) {
     success.textContent = "✓ Registered! Select your name above to login.";
-    btn.disabled = false;
-    btn.textContent = "Register";
     await populateUserSelect();
-    return;
+  } else {
+    err.textContent = `Error: ${resp.status}`;
   }
-
-  let pat = localStorage.getItem("wc_pat");
-  if (!pat) {
-    pat = prompt("One-time setup: enter the family GitHub token (ask Immanuel):");
-    if (!pat) { err.textContent = "Cancelled."; btn.disabled = false; btn.textContent = "Register"; return; }
-    localStorage.setItem("wc_pat", pat);
-  }
-
-  try {
-    const resp = await fetch(`https://api.github.com/repos/${REPO}/actions/workflows/register-user.yml/dispatches`, {
-      method: "POST",
-      headers: { Authorization: `token ${pat}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ ref: "main", inputs: { user: name, pin_hash: hash } }),
-    });
-    if (resp.status === 204) {
-      success.textContent = "✓ Registered! Wait ~30s then refresh to login.";
-    } else {
-      err.textContent = `Error: ${resp.status}`;
-      btn.disabled = false;
-      btn.textContent = "Register";
-    }
-  } catch (e) {
-    err.textContent = `Failed: ${e.message}`;
-    btn.disabled = false;
-    btn.textContent = "Register";
-  }
+  btn.disabled = false;
+  btn.textContent = "Register";
 };
 
 // Tabs
@@ -184,13 +157,11 @@ document.querySelectorAll(".tab").forEach(btn => {
 
 // Render
 function render() {
-  if (lastUpdated) {
-    const t = new Date(lastUpdated).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-    const txt = `Updated: ${t}`;
-    document.getElementById("last-updated").textContent = txt;
-    document.getElementById("last-updated-bd").textContent = txt;
-    document.getElementById("last-updated-res").textContent = txt;
-  }
+  const t = new Date().toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  const txt = `Updated: ${t}`;
+  document.getElementById("last-updated").textContent = txt;
+  document.getElementById("last-updated-bd").textContent = txt;
+  document.getElementById("last-updated-res").textContent = txt;
   renderPredict();
   renderLeaderboard();
   renderBreakdown();
@@ -241,7 +212,7 @@ function renderLeaderboard() {
     const recent = (u.match_results || []).slice(-5).reverse().map(r =>
       r.points === 7 ? '<span class="dot dot-exact">●</span>' : r.points === 2 ? '<span class="dot dot-correct">●</span>' : '<span class="dot dot-wrong">●</span>'
     ).join("");
-    return `<tr><td>${medals[i] || i + 1}</td><td>${u.user}</td><td>${u.predictions_made}</td><td>${u.games_played || (u.match_results||[]).length}</td><td><strong>${u.total_points}</strong></td><td>${u.correct_winners}</td><td>${u.exact_scores}</td><td class="recent">${recent}</td></tr>`;
+    return `<tr><td>${medals[i] || i + 1}</td><td>${u.user}</td><td>${u.predictions_made}</td><td>${u.games_played}</td><td><strong>${u.total_points}</strong></td><td>${u.correct_winners}</td><td>${u.exact_scores}</td><td class="recent">${recent}</td></tr>`;
   }).join("");
 }
 
@@ -249,7 +220,6 @@ function renderBreakdown() {
   const finished = matches.filter(m => m.status === "FINISHED").sort((a, b) => b.datetime.localeCompare(a.datetime));
   if (!finished.length) { document.getElementById("breakdown-wrap").innerHTML = "<p>No completed matches yet.</p>"; return; }
 
-  // Players sorted by points
   const sorted = [...leaderboard].sort((a, b) => b.total_points - a.total_points);
   const initials = sorted.map(u => u.user.split(" ").map(w => w[0]).join(""));
 
@@ -279,8 +249,7 @@ function renderResults() {
   ).join("") || "<p>No results yet.</p>";
 }
 
-// Submit predictions
-// Live countdown ticker for matches < 1 hour away
+// Live countdown ticker
 setInterval(() => {
   const now = new Date();
   document.querySelectorAll(".match-card").forEach(card => {
@@ -296,6 +265,7 @@ setInterval(() => {
   });
 }, 1000);
 
+// Submit predictions
 document.getElementById("submit-preds").onclick = async () => {
   const btn = document.getElementById("submit-preds");
   const cards = document.querySelectorAll(".match-card");
@@ -310,49 +280,36 @@ document.getElementById("submit-preds").onclick = async () => {
 
   if (!preds.length) { document.getElementById("submit-status").textContent = "Enter at least one prediction."; return; }
 
+  if (!confirm(`Submit ${preds.length} prediction(s)? You can't undo this.`)) return;
+
   const status = document.getElementById("submit-status");
   btn.disabled = true;
   btn.textContent = "Submitting…";
 
-  if (IS_LOCAL) {
-    const stored = JSON.parse(localStorage.getItem("wc_local_preds") || "[]");
-    const updated = stored.filter(p => !(p.user === currentUser && preds.some(np => np.match_id === p.match_id)));
-    for (const p of preds) {
-      updated.push({ user: currentUser, match_id: p.match_id, home_score: p.home_score, away_score: p.away_score, submitted_at: new Date().toISOString() });
-    }
-    localStorage.setItem("wc_local_preds", JSON.stringify(updated));
-    predictions = updated;
-    status.textContent = `✓ Saved ${preds.length} prediction(s) for ${currentUser}.`;
-    btn.disabled = false;
-    btn.textContent = "Submit Predictions";
-    render();
+  // Verify PIN
+  const hash = await hashPin(currentPin);
+  const user = users.find(u => u.name === currentUser);
+  if (!user || user.pin_hash !== hash) {
+    status.textContent = "Auth failed. Please re-login.";
+    btn.disabled = false; btn.textContent = "Submit Predictions";
     return;
   }
 
-  status.textContent = "Submitting… please wait ~30s";
-  let pat = localStorage.getItem("wc_pat");
-  if (!pat) {
-    pat = prompt("One-time setup: enter the family GitHub token (ask Immanuel):");
-    if (!pat) { status.textContent = "Cancelled."; btn.disabled = false; btn.textContent = "Submit Predictions"; return; }
-    localStorage.setItem("wc_pat", pat);
-  }
+  // Upsert predictions to Supabase
+  const rows = preds.map(p => ({user_name: currentUser, match_id: p.match_id, home_score: p.home_score, away_score: p.away_score, submitted_at: new Date().toISOString()}));
+  const resp = await fetch(`${SUPABASE_URL}/rest/v1/predictions?on_conflict=user_name,match_id`, {
+    method: "POST",
+    headers: {...HEADERS, "Content-Type": "application/json", "Prefer": "return=minimal,resolution=merge-duplicates"},
+    body: JSON.stringify(rows)
+  });
 
-  try {
-    const resp = await fetch(API_BASE, {
-      method: "POST",
-      headers: { Authorization: `token ${pat}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ ref: "main", inputs: { user: currentUser, pin: currentPin, predictions: JSON.stringify(preds) } }),
-    });
-    if (resp.status === 204) {
-      status.textContent = "✓ Submitted! Results update in ~30s.";
-    } else {
-      status.textContent = `Error: ${resp.status}`;
-      btn.disabled = false;
-      btn.textContent = "Submit Predictions";
-    }
-  } catch (e) {
-    status.textContent = `Failed: ${e.message}`;
-    btn.disabled = false;
-    btn.textContent = "Submit Predictions";
+  if (resp.ok) {
+    alert(`✓ Saved ${preds.length} prediction(s)!`);
+    await loadData();
+    render();
+  } else {
+    status.textContent = `Error: ${resp.status}`;
   }
+  btn.disabled = false;
+  btn.textContent = "Submit Predictions";
 };

@@ -1,68 +1,50 @@
-"""Fetch latest match scores from football-data.org and update matches.json."""
-import json
+"""Fetch latest match scores from football-data.org and update Supabase."""
 import os
 import requests
 
 API_KEY = os.environ["FOOTBALL_API_KEY"]
+SUPABASE_URL = os.environ["SUPABASE_URL"]
+SUPABASE_KEY = os.environ["SUPABASE_SERVICE_KEY"]
+HEADERS = {"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}", "Content-Type": "application/json", "Prefer": "return=minimal"}
+
 URL = "https://api.football-data.org/v4/competitions/WC/matches?season=2026"
-HEADERS = {"X-Auth-Token": API_KEY}
 
 
 def main():
-    resp = requests.get(URL, headers=HEADERS)
+    resp = requests.get(URL, headers={"X-Auth-Token": API_KEY})
     resp.raise_for_status()
-    api_matches = {m["id"]: m for m in resp.json()["matches"]}
+    api_matches = resp.json()["matches"]
 
-    with open("data/matches.json") as f:
-        local_matches = json.load(f)
+    # Get current matches from Supabase
+    r = requests.get(f"{SUPABASE_URL}/rest/v1/matches?select=id,status,home_score,away_score,home_team,away_team",
+                     headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}"})
+    local = {m["id"]: m for m in r.json()}
 
-    changed = False
-    local_by_id = {m["id"]: m for m in local_matches}
+    updated = 0
+    for api in api_matches:
+        mid = api["id"]
+        new_status = api["status"]
+        new_home = api["score"]["fullTime"]["home"]
+        new_away = api["score"]["fullTime"]["away"]
+        new_home_team = api["homeTeam"]["name"]
+        new_away_team = api["awayTeam"]["name"]
 
-    for mid, api in api_matches.items():
-        if mid in local_by_id:
-            match = local_by_id[mid]
-            new_status = api["status"]
-            new_home = api["score"]["fullTime"]["home"]
-            new_away = api["score"]["fullTime"]["away"]
-            new_home_team = api["homeTeam"]["name"]
-            new_away_team = api["awayTeam"]["name"]
-
-            if (match["status"] != new_status or
-                    match["home_score"] != new_home or
-                    match["away_score"] != new_away or
-                    match["home_team"] != new_home_team or
+        if mid in local:
+            match = local[mid]
+            # Never overwrite existing scores with null
+            if match["home_score"] is not None and new_home is None:
+                continue
+            if (match["status"] != new_status or match["home_score"] != new_home or
+                    match["away_score"] != new_away or match["home_team"] != new_home_team or
                     match["away_team"] != new_away_team):
-                # Never overwrite existing scores with null
-                if match["home_score"] is not None and new_home is None:
-                    continue
-                match["status"] = new_status
-                match["home_score"] = new_home if new_home is not None else match["home_score"]
-                match["away_score"] = new_away if new_away is not None else match["away_score"]
-                match["home_team"] = new_home_team
-                match["away_team"] = new_away_team
-                changed = True
-        else:
-            local_matches.append({
-                "id": mid,
-                "home_team": api["homeTeam"]["name"],
-                "away_team": api["awayTeam"]["name"],
-                "group": api.get("group"),
-                "stage": api["stage"],
-                "datetime": api["utcDate"],
-                "status": api["status"],
-                "home_score": api["score"]["fullTime"]["home"],
-                "away_score": api["score"]["fullTime"]["away"],
-            })
-            changed = True
+                payload = {"status": new_status, "home_team": new_home_team, "away_team": new_away_team}
+                if new_home is not None:
+                    payload["home_score"] = new_home
+                    payload["away_score"] = new_away
+                requests.patch(f"{SUPABASE_URL}/rest/v1/matches?id=eq.{mid}", headers=HEADERS, json=payload)
+                updated += 1
 
-    if changed:
-        local_matches.sort(key=lambda x: x["datetime"])
-        with open("data/matches.json", "w") as f:
-            json.dump(local_matches, f, indent=2)
-        print("Matches updated.")
-    else:
-        print("No changes.")
+    print(f"Updated {updated} match(es)." if updated else "No changes.")
 
 
 if __name__ == "__main__":
