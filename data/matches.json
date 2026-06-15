@@ -116,9 +116,9 @@
     "group": "GROUP_E",
     "stage": "GROUP_STAGE",
     "datetime": "2026-06-14T23:00:00Z",
-    "status": "TIMED",
-    "home_score": null,
-    "away_score": null
+    "status": "FINISHED",
+    "home_score": 1,
+    "away_score": 0
   },
   {
     "id": 537358,
