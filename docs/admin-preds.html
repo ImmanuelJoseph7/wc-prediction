@@ -55,9 +55,10 @@ document.getElementById("login-btn").onclick = async () => {
 };
 
 async function render() {
-  const [matches, predictions, leaderboard] = await Promise.all([
+  let [matches, predictions, leaderboard] = await Promise.all([
     fetchJson("matches.json"), fetchJson("predictions.json"), fetchJson("leaderboard.json")
   ]);
+  if (leaderboard.standings) leaderboard = leaderboard.standings;
 
   const upcoming = matches.filter(m => m.status !== "FINISHED").sort((a, b) => a.datetime.localeCompare(b.datetime));
   if (!upcoming.length) { document.getElementById("preds-wrap").innerHTML = "<p>No upcoming matches.</p>"; return; }
