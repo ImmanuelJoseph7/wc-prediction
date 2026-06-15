@@ -43,6 +43,7 @@ async function populateUserSelect() {
   if (currentUser && currentPin) {
     await loadData();
     document.getElementById("login-dialog").close();
+    if (currentUser === "Immanuel J") document.getElementById("admin-link").style.display = "block";
     render();
   } else {
     await populateUserSelect();
@@ -109,6 +110,7 @@ document.getElementById("login-btn").onclick = async () => {
   sessionStorage.setItem("wc_user", name);
   sessionStorage.setItem("wc_pin", pin);
   document.getElementById("login-dialog").close();
+  if (name === "Immanuel J") document.getElementById("admin-link").style.display = "block";
   render();
 };
 
