@@ -146,6 +146,7 @@ nav {
 
 .error { color: #d32f2f; }
 .success { color: #2E7D32; }
+.last-updated { display: block; text-align: right; color: #888; font-size: 0.75rem; margin-bottom: 0.2rem; }
 
 .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .table-legend { display: block; margin-top: 0.5rem; color: #888; font-size: 0.75rem; }

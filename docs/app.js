@@ -57,6 +57,8 @@ async function populateUserSelect() {
   }
 })();
 
+let lastUpdated = null;
+
 // Data fetching
 async function loadData() {
   const fetchJson = (file) => {
@@ -69,6 +71,11 @@ async function loadData() {
     fetchJson("leaderboard.json"),
     fetchJson("users.json"),
   ]);
+  // Handle new format with last_updated
+  if (leaderboard.standings) {
+    lastUpdated = leaderboard.last_updated;
+    leaderboard = leaderboard.standings;
+  }
   if (IS_LOCAL) {
     const localPreds = JSON.parse(localStorage.getItem("wc_local_preds") || "[]");
     for (const lp of localPreds) {
@@ -177,6 +184,13 @@ document.querySelectorAll(".tab").forEach(btn => {
 
 // Render
 function render() {
+  if (lastUpdated) {
+    const t = new Date(lastUpdated).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    const txt = `Updated: ${t}`;
+    document.getElementById("last-updated").textContent = txt;
+    document.getElementById("last-updated-bd").textContent = txt;
+    document.getElementById("last-updated-res").textContent = txt;
+  }
   renderPredict();
   renderLeaderboard();
   renderBreakdown();

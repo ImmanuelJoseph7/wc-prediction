@@ -68,8 +68,11 @@ def main():
 
     leaderboard.sort(key=lambda x: x["total_points"], reverse=True)
 
+    from datetime import datetime, timezone
+    output = {"last_updated": datetime.now(timezone.utc).isoformat(), "standings": leaderboard}
+
     with open("data/leaderboard.json", "w") as f:
-        json.dump(leaderboard, f, indent=2)
+        json.dump(output, f, indent=2)
 
     print("Leaderboard updated.")
 
