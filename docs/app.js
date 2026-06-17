@@ -44,7 +44,7 @@ function teamForm(team) {
     const gf = isHome ? m.home_score : m.away_score;
     const ga = isHome ? m.away_score : m.home_score;
     const cls = gf > ga ? "form-win" : gf < ga ? "form-loss" : "form-draw";
-    return `<span class="form-item ${cls}">${flag(opp)}${TLA[opp] || opp} ${gf}-${ga}</span>`;
+    return `<span class="form-item ${cls}">${gf}-${ga} ${flag(opp)}${TLA[opp] || opp}</span>`;
   }).join("") + '</div>';
 }
 
