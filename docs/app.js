@@ -38,13 +38,28 @@ function teamForm(team) {
   const finished = matches.filter(m => m.status === "FINISHED" && (m.home_team === team || m.away_team === team))
     .sort((a, b) => b.datetime.localeCompare(a.datetime));
   if (!finished.length) return "";
+  const stageMap = {"GROUP_STAGE":"GS","LAST_32":"R32","LAST_16":"R16","QUARTER_FINALS":"QF","SEMI_FINALS":"SF","THIRD_PLACE":"3rd","FINAL":"F"};
+  const gsCount = {};
+  const gsSorted = [...finished].reverse();
+  gsSorted.forEach(m => {
+    if (m.stage === "GROUP_STAGE") {
+      [m.home_team, m.away_team].forEach(t => { gsCount[t] = (gsCount[t] || 0) + 1; });
+    }
+  });
+  const gsTracker = {};
   return '<div class="team-form">' + finished.map(m => {
     const isHome = m.home_team === team;
     const opp = isHome ? m.away_team : m.home_team;
     const gf = isHome ? m.home_score : m.away_score;
     const ga = isHome ? m.away_score : m.home_score;
     const cls = gf > ga ? "form-win" : gf < ga ? "form-loss" : "form-draw";
-    return `<span class="form-item ${cls}">${gf}-${ga} ${flag(opp)}${TLA[opp] || opp}</span>`;
+    let stg = stageMap[m.stage] || m.stage;
+    if (m.stage === "GROUP_STAGE") {
+      gsTracker[team] = (gsTracker[team] || gsCount[team] || 0);
+      stg = `GS${gsTracker[team]}`;
+      gsTracker[team]--;
+    }
+    return `<span class="form-item ${cls}">${gf}-${ga} ${flag(opp)}${TLA[opp] || opp} (${stg})</span>`;
   }).join("") + '</div>';
 }
 
