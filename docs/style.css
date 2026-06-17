@@ -127,6 +127,15 @@ nav {
   font-weight: 600;
 }
 
+.form-row { display: flex; justify-content: space-between; width: 100%; gap: 1rem; margin-top: 0.3rem; }
+.form-col { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; }
+.team-form { display: flex; flex-direction: column; gap: 0.1rem; }
+.form-item { font-size: 0.7rem; padding: 0.1rem 0.3rem; border-radius: 3px; white-space: nowrap; }
+.form-item img { width: 14px; height: 10px; vertical-align: middle; margin-right: 2px; }
+.form-win { background: #c8e6c9; color: #1B5E20; }
+.form-loss { background: #ffcdd2; color: #c62828; }
+.form-draw { background: #fff9c4; color: #f57f17; }
+
 .submit-btn {
   margin-top: 1rem;
   width: 100%;
