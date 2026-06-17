@@ -247,7 +247,11 @@ function renderLeaderboard() {
   const tbody = document.querySelector("#leaderboard-table tbody");
   const medals = ["🥇", "🥈", "🥉"];
   tbody.innerHTML = leaderboard.map((u, i) => {
-    const recent = (u.match_results || []).slice(-5).reverse().map(r =>
+    const recent = (u.match_results || []).sort((a, b) => {
+      const ma = matches.find(m => m.id === a.match_id);
+      const mb = matches.find(m => m.id === b.match_id);
+      return (ma?.datetime || "").localeCompare(mb?.datetime || "");
+    }).slice(-5).reverse().map(r =>
       r.points === 7 ? '<span class="dot dot-exact">●</span>' : r.points === 2 ? '<span class="dot dot-correct">●</span>' : '<span class="dot dot-wrong">●</span>'
     ).join("");
     return `<tr><td>${medals[i] || i + 1}</td><td>${u.user}</td><td>${u.predictions_made}</td><td>${u.games_played}</td><td><strong>${u.total_points}</strong></td><td>${u.correct_winners}</td><td>${u.exact_scores}</td><td class="recent">${recent}</td></tr>`;
