@@ -28,6 +28,14 @@ def main():
         new_away = api["score"]["fullTime"]["away"]
         new_home_team = api["homeTeam"]["name"]
         new_away_team = api["awayTeam"]["name"]
+        # Determine penalty winner
+        new_pen_winner = None
+        if api["score"].get("duration") == "PENALTY_SHOOTOUT":
+            winner = api["score"].get("winner")
+            if winner == "HOME_TEAM":
+                new_pen_winner = "home"
+            elif winner == "AWAY_TEAM":
+                new_pen_winner = "away"
 
         if mid in local:
             match = local[mid]
@@ -41,6 +49,8 @@ def main():
                 if new_home is not None:
                     payload["home_score"] = new_home
                     payload["away_score"] = new_away
+                if new_pen_winner:
+                    payload["pen_winner"] = new_pen_winner
                 requests.patch(f"{SUPABASE_URL}/rest/v1/matches?id=eq.{mid}", headers=HEADERS, json=payload)
                 updated += 1
 

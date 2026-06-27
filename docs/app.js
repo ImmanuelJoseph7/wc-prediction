@@ -59,7 +59,7 @@ function teamForm(team) {
       stg = `GS${gsTracker[team]}`;
       gsTracker[team]--;
     }
-    return `<span class="form-item ${cls}">${gf}-${ga} ${flag(opp)}${TLA[opp] || opp} (${stg})</span>`;
+    return `<span class="form-item ${cls}">${gf}-${ga} ${flag(opp)}${TLA[opp] || opp} (${stg})${m.pen_winner ? ' P' : ''}</span>`;
   }).join("") + '</div>';
 }
 
@@ -99,8 +99,8 @@ async function loadData() {
     sb("predictions", "select=*"),
     sb("users", "select=name,pin_hash"),
   ]);
-  matches = m.map(r => ({id: r.id, home_team: r.home_team, away_team: r.away_team, group: r.group_name, stage: r.stage, datetime: r.kickoff, status: r.status, home_score: r.home_score, away_score: r.away_score}));
-  predictions = p.map(r => ({user: r.user_name, match_id: r.match_id, home_score: r.home_score, away_score: r.away_score, submitted_at: r.submitted_at}));
+  matches = m.map(r => ({id: r.id, home_team: r.home_team, away_team: r.away_team, group: r.group_name, stage: r.stage, datetime: r.kickoff, status: r.status, home_score: r.home_score, away_score: r.away_score, pen_winner: r.pen_winner}));
+  predictions = p.map(r => ({user: r.user_name, match_id: r.match_id, home_score: r.home_score, away_score: r.away_score, pen_winner: r.pen_winner, submitted_at: r.submitted_at}));
   users = u;
   computeLeaderboard();
 }
@@ -122,6 +122,10 @@ function computeLeaderboard() {
         pts = 7; stats[u.name].exact_scores++; stats[u.name].correct_winners++;
       } else if (Math.sign(p.home_score - p.away_score) === Math.sign(m.home_score - m.away_score)) {
         pts = 2; stats[u.name].correct_winners++;
+      }
+      // +3 bonus for correct penalty winner pick
+      if (m.pen_winner && p.pen_winner && p.pen_winner === m.pen_winner) {
+        pts += 3;
       }
       stats[u.name].total_points += pts;
       stats[u.name].match_results.push({match_id: p.match_id, prediction: `${p.home_score}-${p.away_score}`, actual: `${m.home_score}-${m.away_score}`, points: pts});
@@ -237,6 +241,16 @@ function renderPredict() {
     const sec = Math.floor((diff % 60000) / 1000);
     const countdown = d > 0 ? `${d}d ${h}h ${min}m` : h > 0 ? `${h}h ${min}m` : `${min}m ${sec}s`;
     const groupLabel = (m.group || m.stage).replace("GROUP_", "Group ").replace("_", " ");
+    const isKnockout = m.stage !== "GROUP_STAGE";
+    const penWinner = existing?.pen_winner || "";
+    const penHtml = isKnockout ? `<div class="pen-row hidden" data-pen="${m.id}">
+      <span>Penalty winner:</span>
+      <select class="pen-select">
+        <option value="">Pick…</option>
+        <option value="home" ${penWinner === "home" ? "selected" : ""}>${m.home_team}</option>
+        <option value="away" ${penWinner === "away" ? "selected" : ""}>${m.away_team}</option>
+      </select>
+    </div>` : "";
     return `<div class="match-card" data-id="${m.id}">
       <span class="group-tag">${groupLabel}</span>
       <div class="match-time"><strong>${dt}</strong></div>
@@ -247,6 +261,7 @@ function renderPredict() {
         <input type="number" min="0" max="20" class="away-score" value="${aVal}">
         <span class="team away">${flag(m.away_team)} ${m.away_team}</span>
       </div>
+      ${penHtml}
       <div class="form-row">
         <div class="form-col">${teamForm(m.home_team)}</div>
         <div class="form-col">${teamForm(m.away_team)}</div>
@@ -256,6 +271,24 @@ function renderPredict() {
   }).join("");
 
   document.getElementById("submit-preds").disabled = false;
+
+  // Show pen picker for knockout draws
+  document.querySelectorAll(".match-card").forEach(card => {
+    const hInput = card.querySelector(".home-score");
+    const aInput = card.querySelector(".away-score");
+    const penRow = card.querySelector(".pen-row");
+    if (!penRow) return;
+    const toggle = () => {
+      if (hInput.value !== "" && aInput.value !== "" && hInput.value === aInput.value) {
+        penRow.classList.remove("hidden");
+      } else {
+        penRow.classList.add("hidden");
+      }
+    };
+    hInput.addEventListener("input", toggle);
+    aInput.addEventListener("input", toggle);
+    toggle();
+  });
 }
 
 function renderLeaderboard() {
@@ -285,7 +318,7 @@ function renderBreakdown() {
   html += '</tr></thead><tbody>';
 
   for (const m of finished) {
-    html += `<tr><td class="game-cell">${flag(m.home_team)}<span class="abr">${m.home_score}–${m.away_score}</span>${flag(m.away_team)}</td>`;
+    html += `<tr><td class="game-cell">${flag(m.home_team)}<span class="abr">${m.home_score}–${m.away_score}${m.pen_winner ? 'P' : ''}</span>${flag(m.away_team)}</td>`;
     for (const u of sorted) {
       const p = predictions.find(pr => pr.user === u.user && pr.match_id === m.id);
       if (!p) { html += '<td class="bd-cell bd-none">–</td>'; continue; }
@@ -301,9 +334,10 @@ function renderBreakdown() {
 
 function renderResults() {
   const finished = matches.filter(m => m.status === "FINISHED").sort((a, b) => b.datetime.localeCompare(a.datetime));
-  document.getElementById("results-list").innerHTML = finished.map(m =>
-    `<div class="result-card"><span>${flag(m.home_team)} ${m.home_team}</span><span class="score">${m.home_score} – ${m.away_score}</span><span>${m.away_team} ${flag(m.away_team)}</span></div>`
-  ).join("") || "<p>No results yet.</p>";
+  document.getElementById("results-list").innerHTML = finished.map(m => {
+    const penInfo = m.pen_winner ? `<div class="pen-info">${m.pen_winner === "home" ? m.home_team : m.away_team} wins on pens</div>` : "";
+    return `<div class="result-card"><span>${flag(m.home_team)} ${m.home_team}</span><span class="score">${m.home_score} – ${m.away_score}</span><span>${m.away_team} ${flag(m.away_team)}</span>${penInfo}</div>`;
+  }).join("") || "<p>No results yet.</p>";
 }
 
 // Live countdown ticker
@@ -331,7 +365,10 @@ document.getElementById("submit-preds").onclick = async () => {
     const h = card.querySelector(".home-score").value;
     const a = card.querySelector(".away-score").value;
     if (h !== "" && a !== "") {
-      preds.push({ match_id: parseInt(card.dataset.id), home_score: parseInt(h), away_score: parseInt(a) });
+      const pred = { match_id: parseInt(card.dataset.id), home_score: parseInt(h), away_score: parseInt(a) };
+      const penSelect = card.querySelector(".pen-select");
+      if (penSelect && h === a) pred.pen_winner = penSelect.value || null;
+      preds.push(pred);
     }
   });
 
@@ -353,7 +390,7 @@ document.getElementById("submit-preds").onclick = async () => {
   }
 
   // Upsert predictions to Supabase
-  const rows = preds.map(p => ({user_name: currentUser, match_id: p.match_id, home_score: p.home_score, away_score: p.away_score, submitted_at: new Date().toISOString()}));
+  const rows = preds.map(p => ({user_name: currentUser, match_id: p.match_id, home_score: p.home_score, away_score: p.away_score, pen_winner: p.pen_winner || null, submitted_at: new Date().toISOString()}));
   const resp = await fetch(`${SUPABASE_URL}/rest/v1/predictions?on_conflict=user_name,match_id`, {
     method: "POST",
     headers: {...HEADERS, "Content-Type": "application/json", "Prefer": "return=minimal,resolution=merge-duplicates"},

@@ -128,6 +128,8 @@ nav {
 }
 
 .form-row { display: flex; justify-content: space-between; width: 100%; gap: 1rem; margin-top: 0.3rem; }
+.pen-row { display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-top: 0.3rem; font-size: 0.85rem; color: #555; }
+.pen-row select { width: auto; padding: 0.2rem 0.5rem; font-size: 0.85rem; margin: 0; }
 .form-col { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; }
 .team-form { display: flex; flex-direction: column; gap: 0.1rem; }
 .form-item { font-size: 0.7rem; padding: 0.1rem 0.3rem; border-radius: 3px; white-space: nowrap; }
@@ -227,6 +229,14 @@ nav {
   font-size: 1.3rem;
   color: var(--pitch-dark);
   text-align: center;
+}
+
+.result-card .pen-info {
+  grid-column: 1 / -1;
+  text-align: center;
+  font-size: 0.75rem;
+  color: #666;
+  font-style: italic;
 }
 
 dialog article {
