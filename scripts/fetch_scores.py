@@ -42,10 +42,19 @@ def main():
             # Never overwrite existing scores with null
             if match["home_score"] is not None and new_home is None:
                 continue
+            # Never overwrite existing team names with null
+            if match["home_team"] is not None and new_home_team is None:
+                new_home_team = match["home_team"]
+            if match["away_team"] is not None and new_away_team is None:
+                new_away_team = match["away_team"]
             if (match["status"] != new_status or match["home_score"] != new_home or
                     match["away_score"] != new_away or match["home_team"] != new_home_team or
                     match["away_team"] != new_away_team):
-                payload = {"status": new_status, "home_team": new_home_team, "away_team": new_away_team}
+                payload = {"status": new_status}
+                if new_home_team is not None:
+                    payload["home_team"] = new_home_team
+                if new_away_team is not None:
+                    payload["away_team"] = new_away_team
                 if new_home is not None:
                     payload["home_score"] = new_home
                     payload["away_score"] = new_away
