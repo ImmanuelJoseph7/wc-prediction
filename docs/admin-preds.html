@@ -63,7 +63,7 @@ async function render() {
     sb("users", "select=name")
   ]);
   const matches = matchesRaw.map(r => ({id: r.id, home_team: r.home_team, away_team: r.away_team, datetime: r.kickoff, status: r.status}));
-  const predictions = predsRaw.map(r => ({user: r.user_name, match_id: r.match_id, home_score: r.home_score, away_score: r.away_score}));
+  const predictions = predsRaw.map(r => ({user: r.user_name, match_id: r.match_id, home_score: r.home_score, away_score: r.away_score, pen_winner: r.pen_winner}));
 
   const upcoming = matches.filter(m => m.status !== "FINISHED").sort((a, b) => a.datetime.localeCompare(b.datetime));
   if (!upcoming.length) { document.getElementById("preds-wrap").innerHTML = "<p>No upcoming matches.</p>"; return; }
@@ -81,7 +81,8 @@ async function render() {
     for (const u of users) {
       const p = predictions.find(pr => pr.user === u && pr.match_id === m.id);
       if (!p) { html += '<td class="bd-cell bd-none">–</td>'; continue; }
-      html += `<td class="bd-cell">${p.home_score}-${p.away_score}</td>`;
+      const penLabel = p.pen_winner ? ` ${flag(p.pen_winner === "home" ? m.home_team : m.away_team)}` : "";
+      html += `<td class="bd-cell">${p.home_score}-${p.away_score}${penLabel}</td>`;
     }
     html += '</tr>';
   }
