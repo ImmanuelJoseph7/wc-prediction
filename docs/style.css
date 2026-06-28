@@ -169,7 +169,7 @@ nav {
 #tab-scoring h3 { color: var(--accent); }
 #tab-scoring p { color: #444; }
 .scoring-list { list-style: none; padding: 0; margin: 0.5rem 0; }
-.scoring-list li { padding: 0.4rem 0; border-bottom: 1px solid #e0e0e0; color: #222; }
+.scoring-list li { padding: 0.4rem 0; border-bottom: 1px solid #e0e0e0; color: #222 !important; }
 .scoring-table { width: 100%; border-collapse: collapse; margin: 0.5rem 0 1.5rem; background: transparent; }
 .scoring-table td { padding: 0.4rem 0.6rem; border-bottom: 1px solid #e0e0e0; color: #222; background: transparent; }
 .scoring-table td:last-child { text-align: right; white-space: nowrap; }
