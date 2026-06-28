@@ -70,6 +70,7 @@ let predictions = [];
 let leaderboard = [];
 let users = [];
 
+
 async function sb(table, query = "") {
   const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, {headers: HEADERS});
   return r.json();
@@ -105,33 +106,56 @@ async function loadData() {
   computeLeaderboard();
 }
 
-function computeLeaderboard() {
-  const finished = matches.filter(m => m.status === "FINISHED" && m.home_score !== null);
-  const stats = {};
-  users.forEach(u => { stats[u.name] = {user: u.name, total_points: 0, correct_winners: 0, exact_scores: 0, predictions_made: 0, games_played: 0, match_results: []}; });
+let lbGroup = [], lbKnockout = [], lbCombined = [];
+let activePhase = "knockout";
+let bdPhase = "knockout";
 
+function isKnockoutStage(stage) { return stage !== "GROUP_STAGE"; }
+
+function scoreMatch(p, m) {
+  let pts = 0, exact = false, correctWinner = false;
+  if (p.home_score === m.home_score && p.away_score === m.away_score) {
+    pts = 7; exact = true; correctWinner = true;
+  } else if (Math.sign(p.home_score - p.away_score) === Math.sign(m.home_score - m.away_score)) {
+    pts = 2; correctWinner = true;
+  }
+  // +3 for correct penalty winner
+  if (m.pen_winner && p.pen_winner && p.pen_winner === m.pen_winner) { pts += 3; }
+  return {pts, exact, correctWinner};
+}
+
+function buildLeaderboard(finishedMatches, phaseFilter) {
+  const matchIds = new Set(finishedMatches.map(m => m.id));
+  const phaseMatchIds = new Set(matches.filter(phaseFilter).map(m => m.id));
+  const stats = {};
+  users.forEach(u => { stats[u.name] = {user: u.name, total_points: 0, correct_winners: 0, exact_scores: 0, wrong: 0, pen_correct: 0, predictions_made: 0, games_played: 0, match_results: []}; });
   for (const u of users) {
-    const userPreds = predictions.filter(p => p.user === u.name);
-    stats[u.name].predictions_made = userPreds.length;
+    stats[u.name].predictions_made = predictions.filter(p => p.user === u.name && phaseMatchIds.has(p.match_id)).length;
+    const userPreds = predictions.filter(p => p.user === u.name && matchIds.has(p.match_id));
     for (const p of userPreds) {
-      const m = finished.find(fm => fm.id === p.match_id);
+      const m = finishedMatches.find(fm => fm.id === p.match_id);
       if (!m) continue;
       stats[u.name].games_played++;
-      let pts = 0;
-      if (p.home_score === m.home_score && p.away_score === m.away_score) {
-        pts = 7; stats[u.name].exact_scores++; stats[u.name].correct_winners++;
-      } else if (Math.sign(p.home_score - p.away_score) === Math.sign(m.home_score - m.away_score)) {
-        pts = 2; stats[u.name].correct_winners++;
-      }
-      // +3 bonus for correct penalty winner pick
-      if (m.pen_winner && p.pen_winner && p.pen_winner === m.pen_winner) {
-        pts += 3;
-      }
+      const {pts, exact, correctWinner} = scoreMatch(p, m);
+      if (exact) stats[u.name].exact_scores++;
+      else if (correctWinner) stats[u.name].correct_winners++;
+      else stats[u.name].wrong++;
+      if (m.pen_winner && p.pen_winner && p.pen_winner === m.pen_winner) stats[u.name].pen_correct++;
       stats[u.name].total_points += pts;
       stats[u.name].match_results.push({match_id: p.match_id, prediction: `${p.home_score}-${p.away_score}`, actual: `${m.home_score}-${m.away_score}`, points: pts});
     }
   }
-  leaderboard = Object.values(stats).sort((a, b) => b.total_points - a.total_points);
+  return Object.values(stats).sort((a, b) => b.total_points - a.total_points);
+}
+
+function computeLeaderboard() {
+  const finished = matches.filter(m => m.status === "FINISHED" && m.home_score !== null);
+  const groupMatches = finished.filter(m => !isKnockoutStage(m.stage));
+  const knockoutMatches = finished.filter(m => isKnockoutStage(m.stage));
+  lbGroup = buildLeaderboard(groupMatches, m => !isKnockoutStage(m.stage));
+  lbKnockout = buildLeaderboard(knockoutMatches, m => isKnockoutStage(m.stage));
+  lbCombined = buildLeaderboard(finished, () => true);
+  leaderboard = lbKnockout;
 }
 
 // Auth
@@ -204,6 +228,26 @@ document.querySelectorAll(".tab").forEach(btn => {
   };
 });
 
+// Leaderboard sub-tabs
+document.querySelectorAll(".lb-tab").forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll(".lb-tab").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    activePhase = btn.dataset.phase;
+    renderLeaderboard();
+  };
+});
+
+// Breakdown sub-tabs
+document.querySelectorAll(".bd-tab").forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll(".bd-tab").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    bdPhase = btn.dataset.phase;
+    renderBreakdown();
+  };
+});
+
 // Render
 function render() {
   sb("metadata", "key=eq.scores_fetched_at&select=value").then(r => {
@@ -244,12 +288,11 @@ function renderPredict() {
     const isKnockout = m.stage !== "GROUP_STAGE";
     const penWinner = existing?.pen_winner || "";
     const penHtml = isKnockout ? `<div class="pen-row hidden" data-pen="${m.id}">
-      <span>Penalty winner:</span>
-      <select class="pen-select">
-        <option value="">Pick…</option>
-        <option value="home" ${penWinner === "home" ? "selected" : ""}>${m.home_team}</option>
-        <option value="away" ${penWinner === "away" ? "selected" : ""}>${m.away_team}</option>
-      </select>
+      <span>Penalty Winner:</span>
+      <div class="pen-btns">
+        <button type="button" class="pen-btn ${penWinner === "home" ? "pen-active" : ""}" data-val="home">${flag(m.home_team)}${TLA[m.home_team] || m.home_team}</button>
+        <button type="button" class="pen-btn ${penWinner === "away" ? "pen-active" : ""}" data-val="away">${flag(m.away_team)}${TLA[m.away_team] || m.away_team}</button>
+      </div>
     </div>` : "";
     return `<div class="match-card" data-id="${m.id}">
       <span class="group-tag">${groupLabel}</span>
@@ -283,34 +326,58 @@ function renderPredict() {
         penRow.classList.remove("hidden");
       } else {
         penRow.classList.add("hidden");
+        penRow.querySelectorAll(".pen-btn").forEach(b => b.classList.remove("pen-active"));
       }
     };
     hInput.addEventListener("input", toggle);
     aInput.addEventListener("input", toggle);
     toggle();
+    // Toggle button clicks
+    penRow.querySelectorAll(".pen-btn").forEach(btn => {
+      btn.onclick = () => {
+        penRow.querySelectorAll(".pen-btn").forEach(b => b.classList.remove("pen-active"));
+        btn.classList.add("pen-active");
+      };
+    });
   });
 }
 
 function renderLeaderboard() {
+  const data = activePhase === "group" ? lbGroup : activePhase === "knockout" ? lbKnockout : lbCombined;
+  leaderboard = data;
+  const thead = document.querySelector("#leaderboard-table thead tr");
   const tbody = document.querySelector("#leaderboard-table tbody");
   const medals = ["🥇", "🥈", "🥉"];
-  tbody.innerHTML = leaderboard.map((u, i) => {
-    const recent = (u.match_results || []).sort((a, b) => {
-      const ma = matches.find(m => m.id === a.match_id);
-      const mb = matches.find(m => m.id === b.match_id);
-      return (ma?.datetime || "").localeCompare(mb?.datetime || "");
-    }).slice(-5).reverse().map(r =>
-      r.points === 7 ? '<span class="dot dot-exact">●</span>' : r.points === 2 ? '<span class="dot dot-correct">●</span>' : '<span class="dot dot-wrong">●</span>'
-    ).join("");
-    return `<tr><td>${medals[i] || i + 1}</td><td>${u.user}</td><td>${u.predictions_made}</td><td>${u.games_played}</td><td><strong>${u.total_points}</strong></td><td>${u.correct_winners}</td><td>${u.exact_scores}</td><td class="recent">${recent}</td></tr>`;
+  const isGroup = activePhase === "group";
+  thead.innerHTML = isGroup
+    ? '<th>#</th><th>Name</th><th>MP</th><th>GC</th><th>PTS</th><th>✓</th><th>🎯</th><th>Recent</th>'
+    : '<th>#</th><th>Name</th><th>MP</th><th>GC</th><th>PTS</th><th>🎯</th><th>✓</th><th>❌</th><th>🅿️</th>';
+  tbody.innerHTML = data.map((u, i) => {
+    if (isGroup) {
+      const recent = (u.match_results || []).sort((a, b) => {
+        const ma = matches.find(m => m.id === a.match_id);
+        const mb = matches.find(m => m.id === b.match_id);
+        return (ma?.datetime || "").localeCompare(mb?.datetime || "");
+      }).slice(-5).reverse().map(r =>
+        r.points >= 7 ? '<span class="dot dot-exact">●</span>' : r.points >= 2 ? '<span class="dot dot-correct">●</span>' : '<span class="dot dot-wrong">●</span>'
+      ).join("");
+      return `<tr><td>${medals[i] || i + 1}</td><td>${u.user}</td><td>${u.predictions_made}</td><td>${u.games_played}</td><td><strong>${u.total_points}</strong></td><td>${u.correct_winners}</td><td>${u.exact_scores}</td><td class="recent">${recent}</td></tr>`;
+    }
+    return `<tr><td>${medals[i] || i + 1}</td><td>${u.user}</td><td>${u.predictions_made}</td><td>${u.games_played}</td><td><strong>${u.total_points}</strong></td><td>${u.exact_scores}</td><td>${u.correct_winners}</td><td>${u.wrong}</td><td>${u.pen_correct}</td></tr>`;
   }).join("");
+  document.getElementById("lb-legend").textContent = isGroup
+    ? "MP = Matches Predicted · GC = Games Competed · PTS = Points · ✓ = Correct Outcome · 🎯 = Exact Score"
+    : "MP = Matches Predicted · GC = Games Competed · PTS = Points · 🎯 = Exact (7) · ✓ = Correct Outcome (2) · ❌ = Wrong (0) · 🅿️ = Pen Pick (3)";
 }
 
 function renderBreakdown() {
-  const finished = matches.filter(m => m.status === "FINISHED").sort((a, b) => b.datetime.localeCompare(a.datetime));
+  let finished = matches.filter(m => m.status === "FINISHED").sort((a, b) => b.datetime.localeCompare(a.datetime));
+  if (bdPhase === "group") finished = finished.filter(m => !isKnockoutStage(m.stage));
+  else if (bdPhase === "knockout") finished = finished.filter(m => isKnockoutStage(m.stage));
   if (!finished.length) { document.getElementById("breakdown-wrap").innerHTML = "<p>No completed matches yet.</p>"; return; }
 
-  const sorted = [...leaderboard].sort((a, b) => b.total_points - a.total_points);
+  const bdData = bdPhase === "group" ? lbGroup : bdPhase === "knockout" ? lbKnockout : lbCombined;
+  const sorted = [...bdData].sort((a, b) => b.total_points - a.total_points);
   const initials = sorted.map(u => u.user.split(" ").map(w => w[0]).join(""));
 
   let html = '<table class="breakdown-table"><thead><tr><th>Game</th>';
@@ -322,9 +389,10 @@ function renderBreakdown() {
     for (const u of sorted) {
       const p = predictions.find(pr => pr.user === u.user && pr.match_id === m.id);
       if (!p) { html += '<td class="bd-cell bd-none">–</td>'; continue; }
-      const pts = u.match_results?.find(r => r.match_id === m.id)?.points;
-      const cls = pts === 7 ? 'bd-exact' : pts === 2 ? 'bd-correct' : 'bd-wrong';
-      html += `<td class="bd-cell ${cls}">${p.home_score}-${p.away_score}</td>`;
+      const penHit = m.pen_winner && p.pen_winner && p.pen_winner === m.pen_winner;
+      const pts = u.match_results?.find(r => r.match_id === m.id)?.points ?? 0;
+      const cls = pts >= 7 ? 'bd-exact' : pts >= 2 ? 'bd-correct' : 'bd-wrong';
+      html += `<td class="bd-cell ${cls}">${p.home_score}-${p.away_score}${penHit ? '🅿️' : ''}</td>`;
     }
     html += '</tr>';
   }
@@ -366,8 +434,8 @@ document.getElementById("submit-preds").onclick = async () => {
     const a = card.querySelector(".away-score").value;
     if (h !== "" && a !== "") {
       const pred = { match_id: parseInt(card.dataset.id), home_score: parseInt(h), away_score: parseInt(a) };
-      const penSelect = card.querySelector(".pen-select");
-      if (penSelect && h === a) pred.pen_winner = penSelect.value || null;
+      const penActive = card.querySelector('.pen-btn.pen-active');
+      if (penActive && h === a) pred.pen_winner = penActive.dataset.val;
       preds.push(pred);
     }
   });

@@ -16,6 +16,7 @@
       <button class="tab" data-tab="leaderboard">Leaderboard</button>
       <button class="tab" data-tab="breakdown">Breakdown</button>
       <button class="tab" data-tab="results">Results</button>
+      <button class="tab" data-tab="scoring">Scoring</button>
     </nav>
 
     <!-- Login overlay -->
@@ -54,12 +55,17 @@
     <section id="tab-leaderboard" class="tab-content hidden">
       <small class="last-updated" id="last-updated"></small>
       <h2>Leaderboard</h2>
+      <div class="lb-tabs">
+        <button class="lb-tab" data-phase="group">Group</button>
+        <button class="lb-tab active" data-phase="knockout">Knockout</button>
+        <button class="lb-tab" data-phase="combined">Combined</button>
+      </div>
       <div class="table-wrap">
       <table id="leaderboard-table">
         <thead><tr><th>#</th><th>Name</th><th>MP</th><th>GC</th><th>PTS</th><th>✓</th><th>🎯</th><th>Recent</th></tr></thead>
         <tbody></tbody>
       </table>
-      <small class="table-legend">MP = Matches Predicted · GC = Games Completed · PTS = Points · ✓ = Correct Winner · 🎯 = Exact Score</small>
+      <small class="table-legend" id="lb-legend">MP = Matches Predicted · GC = Games Competed · PTS = Points · ✓ = Correct Outcome · 🎯 = Exact Score</small>
       </div>
     </section>
 
@@ -67,6 +73,11 @@
     <section id="tab-breakdown" class="tab-content hidden">
       <small class="last-updated" id="last-updated-bd"></small>
       <h2>Breakdown</h2>
+      <div class="lb-tabs">
+        <button class="lb-tab bd-tab" data-phase="group">Group</button>
+        <button class="lb-tab bd-tab active" data-phase="knockout">Knockout</button>
+        <button class="lb-tab bd-tab" data-phase="combined">Combined</button>
+      </div>
       <div class="table-wrap" id="breakdown-wrap"></div>
     </section>
 
@@ -75,6 +86,34 @@
       <small class="last-updated" id="last-updated-res"></small>
       <h2>Completed Matches</h2>
       <div id="results-list"></div>
+    </section>
+
+    <!-- Scoring tab -->
+    <section id="tab-scoring" class="tab-content hidden">
+      <h2>How Scoring Works</h2>
+      <h3>Group Stage</h3>
+      <table class="scoring-table">
+        <tr><td>🎯 Exact score</td><td><strong>7 pts</strong></td></tr>
+        <tr><td>✓ Correct outcome (win/draw/loss)</td><td><strong>2 pts</strong></td></tr>
+        <tr><td>❌ Wrong outcome</td><td><strong>0 pts</strong></td></tr>
+      </table>
+
+      <h3>Knockout Stage</h3>
+      <p>Same as group stage, plus a penalty bonus:</p>
+      <table class="scoring-table">
+        <tr><td>🎯 Exact score</td><td><strong>7 pts</strong></td></tr>
+        <tr><td>✓ Correct outcome</td><td><strong>2 pts</strong></td></tr>
+        <tr><td>❌ Wrong outcome</td><td><strong>0 pts</strong></td></tr>
+        <tr><td>🅿️ Correct penalty winner pick</td><td><strong>+3 pts</strong></td></tr>
+      </table>
+      <p>If a knockout match ends in a draw and goes to penalties, you can pick which team wins. Get it right for a +3 bonus on top of your score prediction points.</p>
+
+      <h3>Leaderboard Tabs</h3>
+      <table class="scoring-table">
+        <tr><td><strong>Group</strong></td><td>Points from group stage matches only</td></tr>
+        <tr><td><strong>Knockout</strong></td><td>Points from knockout matches only (R32, R16, QF, SF, Final)</td></tr>
+        <tr><td><strong>Combined</strong></td><td>Total points across both phases</td></tr>
+      </table>
     </section>
   </main>
   <script src="app.js"></script>
