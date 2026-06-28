@@ -262,6 +262,7 @@ nav {
 }
 .stage-group { margin-bottom: 0.75rem; }
 .stage-group summary { font-weight: 700; font-size: 0.95rem; color: var(--accent); cursor: pointer; padding: 0.4rem 0; }
+.bracket-info { text-align: center; font-size: 0.75rem; color: #555; margin-top: 0.3rem; }
 
 dialog article {
   max-width: 320px;
