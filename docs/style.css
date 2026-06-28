@@ -253,6 +253,13 @@ nav {
   color: #666;
   font-style: italic;
 }
+.result-card .next-info {
+  grid-column: 1 / -1;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--accent);
+  font-weight: 600;
+}
 
 dialog article {
   max-width: 320px;

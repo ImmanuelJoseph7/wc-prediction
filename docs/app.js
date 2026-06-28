@@ -409,10 +409,44 @@ function renderBreakdown() {
 }
 
 function renderResults() {
+  // Bracket: pairs of match IDs whose winners face each other in the next round
+  const BRACKET_PAIRS = [
+    // R32 → R16 (left half)
+    [537417, 537418], // SA/Canada vs Netherlands/Morocco
+    [537415, 537416], // Germany/Paraguay vs France/Sweden
+    [537421, 537422], // USA/Bosnia vs Belgium/Senegal
+    [537419, 537420], // Portugal/Croatia vs Spain/Austria
+    // R32 → R16 (right half)
+    [537423, 537424], // Brazil/Japan vs Ivory Coast/Norway
+    [537425, 537426], // Mexico/Ecuador vs England/DR Congo
+    [537429, 537430], // Switzerland/Algeria vs Colombia/Ghana
+    [537427, 537428], // Argentina/Cape Verde vs Australia/Egypt
+    // R16 → QF
+    [537376, 537375], [537377, 537378], [537379, 537380], [537381, 537382],
+    // QF → SF
+    [537383, 537384], [537385, 537386],
+    // SF → Final / Third Place
+    [537387, 537388]
+  ];
+  const getWinner = (m) => { if (!m || m.status !== "FINISHED") return null; if (m.pen_winner) return m.pen_winner === "home" ? m.home_team : m.away_team; return m.home_score > m.away_score ? m.home_team : m.away_score > m.home_score ? m.away_team : null; };
   const finished = matches.filter(m => m.status === "FINISHED").sort((a, b) => b.datetime.localeCompare(a.datetime));
   document.getElementById("results-list").innerHTML = finished.map(m => {
     const penInfo = m.pen_winner ? `<div class="pen-info">${m.pen_winner === "home" ? m.home_team : m.away_team} wins on pens</div>` : "";
-    return `<div class="result-card"><span>${flag(m.home_team)} ${m.home_team}</span><span class="score">${m.home_score} – ${m.away_score}</span><span>${m.away_team} ${flag(m.away_team)}</span>${penInfo}</div>`;
+    let nextInfo = "";
+    if (isKnockoutStage(m.stage) && m.stage !== "FINAL" && m.stage !== "THIRD_PLACE") {
+      const pair = BRACKET_PAIRS.find(p => p.includes(m.id));
+      if (pair) {
+        const otherId = pair[0] === m.id ? pair[1] : pair[0];
+        const other = matches.find(x => x.id === otherId);
+        const winner = getWinner(m);
+        const otherWinner = getWinner(other);
+        if (winner) {
+          if (otherWinner) nextInfo = `<div class="next-info">Next: ${flag(winner)} ${winner} vs ${flag(otherWinner)} ${otherWinner}</div>`;
+          else if (other && other.home_team) nextInfo = `<div class="next-info">Next: ${flag(winner)} ${winner} vs ${flag(other.home_team)} ${other.home_team} / ${flag(other.away_team)} ${other.away_team}</div>`;
+        }
+      }
+    }
+    return `<div class="result-card"><span>${flag(m.home_team)} ${m.home_team}</span><span class="score">${m.home_score} – ${m.away_score}</span><span>${m.away_team} ${flag(m.away_team)}</span>${penInfo}${nextInfo}</div>`;
   }).join("") || "<p>No results yet.</p>";
 }
 
