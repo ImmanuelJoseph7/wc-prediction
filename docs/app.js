@@ -343,14 +343,18 @@ function renderPredict() {
 }
 
 function renderLeaderboard() {
-  const data = activePhase === "group" ? lbGroup : activePhase === "knockout" ? lbKnockout : lbCombined;
+  let data = activePhase === "group" ? lbGroup : activePhase === "knockout" ? lbKnockout : lbCombined;
+  if (activePhase === "combined") data = [...data].sort((a, b) => (b.games_played ? b.total_points / b.games_played : 0) - (a.games_played ? a.total_points / a.games_played : 0));
   leaderboard = data;
   const thead = document.querySelector("#leaderboard-table thead tr");
   const tbody = document.querySelector("#leaderboard-table tbody");
   const medals = ["🥇", "🥈", "🥉"];
   const isGroup = activePhase === "group";
+  const isCombined = activePhase === "combined";
   thead.innerHTML = isGroup
     ? '<th>#</th><th>Name</th><th>MP</th><th>GC</th><th>PTS</th><th>✓</th><th>🎯</th><th>Recent</th>'
+    : isCombined
+    ? '<th>#</th><th>Name</th><th>MP</th><th>GC</th><th>PTS</th><th>PPG</th><th>🎯</th><th>✓</th><th>❌</th><th>🅿️</th>'
     : '<th>#</th><th>Name</th><th>MP</th><th>GC</th><th>PTS</th><th>🎯</th><th>✓</th><th>❌</th><th>🅿️</th>';
   tbody.innerHTML = data.map((u, i) => {
     if (isGroup) {
@@ -363,10 +367,14 @@ function renderLeaderboard() {
       ).join("");
       return `<tr><td>${medals[i] || i + 1}</td><td>${u.user}</td><td>${u.predictions_made}</td><td>${u.games_played}</td><td><strong>${u.total_points}</strong></td><td>${u.correct_winners}</td><td>${u.exact_scores}</td><td class="recent">${recent}</td></tr>`;
     }
+    const ppg = u.games_played ? (u.total_points / u.games_played).toFixed(2) : "–";
+    if (isCombined) return `<tr><td>${medals[i] || i + 1}</td><td>${u.user}</td><td>${u.predictions_made}</td><td>${u.games_played}</td><td><strong>${u.total_points}</strong></td><td><strong>${ppg}</strong></td><td>${u.exact_scores}</td><td>${u.correct_winners}</td><td>${u.wrong}</td><td>${u.pen_correct}</td></tr>`;
     return `<tr><td>${medals[i] || i + 1}</td><td>${u.user}</td><td>${u.predictions_made}</td><td>${u.games_played}</td><td><strong>${u.total_points}</strong></td><td>${u.exact_scores}</td><td>${u.correct_winners}</td><td>${u.wrong}</td><td>${u.pen_correct}</td></tr>`;
   }).join("");
   document.getElementById("lb-legend").textContent = isGroup
     ? "MP = Matches Predicted · GC = Games Competed · PTS = Points · ✓ = Correct Outcome · 🎯 = Exact Score"
+    : isCombined
+    ? "MP = Matches Predicted · GC = Games Competed · PTS = Points · PPG = Points Per Game · 🎯 = Exact (7) · ✓ = Correct Outcome (2) · ❌ = Wrong (0) · 🅿️ = Pen Pick (3)"
     : "MP = Matches Predicted · GC = Games Competed · PTS = Points · 🎯 = Exact (7) · ✓ = Correct Outcome (2) · ❌ = Wrong (0) · 🅿️ = Pen Pick (3)";
 }
 
