@@ -430,24 +430,36 @@ function renderResults() {
   ];
   const getWinner = (m) => { if (!m || m.status !== "FINISHED") return null; if (m.pen_winner) return m.pen_winner === "home" ? m.home_team : m.away_team; return m.home_score > m.away_score ? m.home_team : m.away_score > m.home_score ? m.away_team : null; };
   const finished = matches.filter(m => m.status === "FINISHED").sort((a, b) => b.datetime.localeCompare(a.datetime));
-  document.getElementById("results-list").innerHTML = finished.map(m => {
-    const penInfo = m.pen_winner ? `<div class="pen-info">${m.pen_winner === "home" ? m.home_team : m.away_team} wins on pens</div>` : "";
-    let nextInfo = "";
-    if (isKnockoutStage(m.stage) && m.stage !== "FINAL" && m.stage !== "THIRD_PLACE") {
-      const pair = BRACKET_PAIRS.find(p => p.includes(m.id));
-      if (pair) {
-        const otherId = pair[0] === m.id ? pair[1] : pair[0];
-        const other = matches.find(x => x.id === otherId);
-        const winner = getWinner(m);
-        const otherWinner = getWinner(other);
-        if (winner) {
-          if (otherWinner) nextInfo = `<div class="next-info">Next: ${flag(winner)} ${winner} vs ${flag(otherWinner)} ${otherWinner}</div>`;
-          else if (other && other.home_team) nextInfo = `<div class="next-info">Next: ${flag(winner)} ${winner} vs ${flag(other.home_team)} ${other.home_team} / ${flag(other.away_team)} ${other.away_team}</div>`;
+  const stageOrder = ["FINAL", "THIRD_PLACE", "SEMI_FINALS", "QUARTER_FINALS", "LAST_16", "LAST_32", "GROUP_STAGE"];
+  const stageNames = {"FINAL":"Final","THIRD_PLACE":"Third Place","SEMI_FINALS":"Semi-Finals","QUARTER_FINALS":"Quarter-Finals","LAST_16":"Round of 16","LAST_32":"Round of 32","GROUP_STAGE":"Group Stage"};
+  const grouped = {};
+  for (const m of finished) { (grouped[m.stage] = grouped[m.stage] || []).push(m); }
+  let html = "";
+  for (const stage of stageOrder) {
+    if (!grouped[stage]) continue;
+    const open = stage !== "GROUP_STAGE" ? "open" : "";
+    html += `<details class="stage-group" ${open}><summary>${stageNames[stage] || stage} (${grouped[stage].length})</summary>`;
+    for (const m of grouped[stage]) {
+      const penInfo = m.pen_winner ? `<div class="pen-info">${m.pen_winner === "home" ? m.home_team : m.away_team} wins on pens</div>` : "";
+      let nextInfo = "";
+      if (isKnockoutStage(m.stage) && m.stage !== "FINAL" && m.stage !== "THIRD_PLACE") {
+        const pair = BRACKET_PAIRS.find(p => p.includes(m.id));
+        if (pair) {
+          const otherId = pair[0] === m.id ? pair[1] : pair[0];
+          const other = matches.find(x => x.id === otherId);
+          const winner = getWinner(m);
+          const otherWinner = getWinner(other);
+          if (winner) {
+            if (otherWinner) nextInfo = `<div class="next-info">Next: ${flag(winner)} ${winner} vs ${flag(otherWinner)} ${otherWinner}</div>`;
+            else if (other && other.home_team) nextInfo = `<div class="next-info">Next: ${flag(winner)} ${winner} vs ${flag(other.home_team)} ${other.home_team} / ${flag(other.away_team)} ${other.away_team}</div>`;
+          }
         }
       }
+      html += `<div class="result-card"><span>${flag(m.home_team)} ${m.home_team}</span><span class="score">${m.home_score} – ${m.away_score}</span><span>${m.away_team} ${flag(m.away_team)}</span>${penInfo}${nextInfo}</div>`;
     }
-    return `<div class="result-card"><span>${flag(m.home_team)} ${m.home_team}</span><span class="score">${m.home_score} – ${m.away_score}</span><span>${m.away_team} ${flag(m.away_team)}</span>${penInfo}${nextInfo}</div>`;
-  }).join("") || "<p>No results yet.</p>";
+    html += `</details>`;
+  }
+  document.getElementById("results-list").innerHTML = html || "<p>No results yet.</p>";
 }
 
 // Live countdown ticker

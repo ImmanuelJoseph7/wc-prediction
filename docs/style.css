@@ -260,6 +260,8 @@ nav {
   color: var(--accent);
   font-weight: 600;
 }
+.stage-group { margin-bottom: 0.75rem; }
+.stage-group summary { font-weight: 700; font-size: 0.95rem; color: var(--accent); cursor: pointer; padding: 0.4rem 0; }
 
 dialog article {
   max-width: 320px;
