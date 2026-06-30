@@ -2,3 +2,4 @@ PROGRESS.md
 scripts/check_scores.py
 *.pyc
 .env
+scripts/check_api.ps1
