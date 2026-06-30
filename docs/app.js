@@ -86,11 +86,24 @@ async function populateUserSelect() {
   users.forEach(u => { sel.innerHTML += `<option>${u.name}</option>`; });
 }
 
+function showSignedIn() {
+  const el = document.getElementById("signed-in-as");
+  el.innerHTML = `Signed in as <strong>${currentUser}</strong> · <a href="#" id="sign-off-link">Sign off</a>`;
+  el.style.display = "block";
+  document.getElementById("sign-off-link").onclick = (e) => {
+    e.preventDefault();
+    sessionStorage.removeItem("wc_user");
+    sessionStorage.removeItem("wc_pin");
+    location.reload();
+  };
+}
+
 (async () => {
   if (currentUser && currentPin) {
     await loadData();
     document.getElementById("login-dialog").close();
     if (currentUser === "Immanuel J") document.getElementById("admin-link").style.display = "block";
+    showSignedIn();
     render();
   } else {
     await populateUserSelect();
@@ -196,6 +209,7 @@ document.getElementById("login-btn").onclick = async () => {
   sessionStorage.setItem("wc_pin", pin);
   document.getElementById("login-dialog").close();
   if (name === "Immanuel J") document.getElementById("admin-link").style.display = "block";
+  showSignedIn();
   render();
 };
 
