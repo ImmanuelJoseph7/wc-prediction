@@ -125,6 +125,10 @@ function scoreMatch(p, m) {
     pts = 7; exact = true; correctWinner = true;
   } else if (Math.sign(p.home_score - p.away_score) === Math.sign(m.home_score - m.away_score)) {
     pts = 2; correctWinner = true;
+  } else if (m.pen_winner) {
+    // Match went to pens (draw) but user predicted a winner — check if they picked the advancing team
+    const predWinner = p.home_score > p.away_score ? "home" : p.away_score > p.home_score ? "away" : null;
+    if (predWinner && predWinner === m.pen_winner) { pts = 2; correctWinner = true; }
   }
   // +3 for correct penalty winner
   if (m.pen_winner && p.pen_winner && p.pen_winner === m.pen_winner) { pts += 3; }
