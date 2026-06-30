@@ -23,19 +23,47 @@ def main():
     updated = 0
     for api in api_matches:
         mid = api["id"]
+        score = api["score"]
         new_status = api["status"]
-        new_home = api["score"]["fullTime"]["home"]
-        new_away = api["score"]["fullTime"]["away"]
         new_home_team = api["homeTeam"]["name"]
         new_away_team = api["awayTeam"]["name"]
-        # Determine penalty winner
-        new_pen_winner = None
-        if api["score"].get("duration") == "PENALTY_SHOOTOUT":
-            winner = api["score"].get("winner")
-            if winner == "HOME_TEAM":
+
+        # Determine if this is a penalty shootout match
+        is_pens = score.get("duration") == "PENALTY_SHOOTOUT"
+
+        # For penalty matches, derive scores from the components
+        # fullTime includes pen goals, so: pen goals = fullTime - regularTime - extraTime
+        if is_pens:
+            ft_home = score["fullTime"]["home"]
+            ft_away = score["fullTime"]["away"]
+            rt_home = score.get("regularTime", {}).get("home")
+            et_home = score.get("extraTime", {}).get("home", 0)
+            rt_away = score.get("regularTime", {}).get("away")
+            et_away = score.get("extraTime", {}).get("away", 0)
+
+            # Need regularTime to derive anything useful
+            if rt_home is None or ft_home is None:
+                continue
+
+            new_home = rt_home + (et_home or 0)  # Match score is 90min + extra time
+            new_away = rt_away + (et_away or 0)
+            new_pen_home = ft_home - rt_home - (et_home or 0)
+            new_pen_away = ft_away - rt_away - (et_away or 0)
+
+            # Winner is whoever scored more in the shootout
+            if new_pen_home > new_pen_away:
                 new_pen_winner = "home"
-            elif winner == "AWAY_TEAM":
+            elif new_pen_away > new_pen_home:
                 new_pen_winner = "away"
+            else:
+                # Shouldn't happen in a valid shootout, skip until API settles
+                continue
+        else:
+            new_home = score["fullTime"]["home"]
+            new_away = score["fullTime"]["away"]
+            new_pen_winner = None
+            new_pen_home = None
+            new_pen_away = None
 
         if mid in local:
             match = local[mid]
@@ -60,6 +88,10 @@ def main():
                     payload["away_score"] = new_away
                 if new_pen_winner:
                     payload["pen_winner"] = new_pen_winner
+                if new_pen_home is not None:
+                    payload["pen_home_score"] = new_pen_home
+                if new_pen_away is not None:
+                    payload["pen_away_score"] = new_pen_away
                 requests.patch(f"{SUPABASE_URL}/rest/v1/matches?id=eq.{mid}", headers=HEADERS, json=payload)
                 updated += 1
 

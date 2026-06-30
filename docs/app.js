@@ -59,7 +59,10 @@ function teamForm(team) {
       stg = `GS${gsTracker[team]}`;
       gsTracker[team]--;
     }
-    return `<span class="form-item ${cls}">${gf}-${ga} ${flag(opp)}${TLA[opp] || opp} (${stg})${m.pen_winner ? ' P' : ''}</span>`;
+    const penHome = isHome ? m.pen_home_score : m.pen_away_score;
+    const penAway = isHome ? m.pen_away_score : m.pen_home_score;
+    const scoreStr = penHome != null ? `${gf}(${penHome})-${ga}(${penAway})` : `${gf}-${ga}`;
+    return `<span class="form-item ${cls}">${scoreStr} ${flag(opp)}${TLA[opp] || opp} (${stg})</span>`;
   }).join("") + '</div>';
 }
 
@@ -100,7 +103,7 @@ async function loadData() {
     sb("predictions", "select=*"),
     sb("users", "select=name,pin_hash"),
   ]);
-  matches = m.map(r => ({id: r.id, home_team: r.home_team, away_team: r.away_team, group: r.group_name, stage: r.stage, datetime: r.kickoff, status: r.status, home_score: r.home_score, away_score: r.away_score, pen_winner: r.pen_winner}));
+  matches = m.map(r => ({id: r.id, home_team: r.home_team, away_team: r.away_team, group: r.group_name, stage: r.stage, datetime: r.kickoff, status: r.status, home_score: r.home_score, away_score: r.away_score, pen_winner: r.pen_winner, pen_home_score: r.pen_home_score, pen_away_score: r.pen_away_score}));
   predictions = p.map(r => ({user: r.user_name, match_id: r.match_id, home_score: r.home_score, away_score: r.away_score, pen_winner: r.pen_winner, submitted_at: r.submitted_at}));
   users = u;
   computeLeaderboard();
@@ -419,14 +422,13 @@ function renderBreakdown() {
   html += '</tr></thead><tbody>';
 
   for (const m of finished) {
-    html += `<tr><td class="game-cell">${flag(m.home_team)}<span class="abr">${m.home_score}–${m.away_score}${m.pen_winner ? 'P' : ''}</span>${flag(m.away_team)}</td>`;
+    html += `<tr><td class="game-cell">${flag(m.home_team)}<span class="abr">${m.pen_home_score != null ? `${m.home_score}(${m.pen_home_score})` : m.home_score}–${m.pen_away_score != null ? `${m.away_score}(${m.pen_away_score})` : m.away_score}</span>${flag(m.away_team)}</td>`;
     for (const u of sorted) {
       const p = predictions.find(pr => pr.user === u.user && pr.match_id === m.id);
       if (!p) { html += '<td class="bd-cell bd-none">–</td>'; continue; }
-      const penHit = m.pen_winner && p.pen_winner && p.pen_winner === m.pen_winner;
       const pts = u.match_results?.find(r => r.match_id === m.id)?.points ?? 0;
       const cls = pts >= 7 ? 'bd-exact' : pts >= 2 ? 'bd-correct' : 'bd-wrong';
-      html += `<td class="bd-cell ${cls}">${p.home_score}-${p.away_score}${penHit ? '🅿️' : ''}</td>`;
+      html += `<td class="bd-cell ${cls}">${p.home_score}-${p.away_score}</td>`;
     }
     html += '</tr>';
   }
@@ -447,6 +449,8 @@ function renderResults() {
     const open = stage !== "GROUP_STAGE" ? "open" : "";
     html += `<details class="stage-group" ${open}><summary>${stageNames[stage] || stage} (${grouped[stage].length})</summary>`;
     for (const m of grouped[stage]) {
+      const homeScoreDisplay = m.pen_home_score != null ? `${m.home_score}(${m.pen_home_score})` : `${m.home_score}`;
+      const awayScoreDisplay = m.pen_away_score != null ? `${m.away_score}(${m.pen_away_score})` : `${m.away_score}`;
       const penInfo = m.pen_winner ? `<div class="pen-info">${m.pen_winner === "home" ? m.home_team : m.away_team} wins on pens</div>` : "";
       let nextInfo = "";
       if (isKnockoutStage(m.stage) && m.stage !== "FINAL" && m.stage !== "THIRD_PLACE") {
@@ -462,7 +466,7 @@ function renderResults() {
           }
         }
       }
-      html += `<div class="result-card"><span>${flag(m.home_team)} ${m.home_team}</span><span class="score">${m.home_score} – ${m.away_score}</span><span>${m.away_team} ${flag(m.away_team)}</span>${penInfo}${nextInfo}</div>`;
+      html += `<div class="result-card"><span>${flag(m.home_team)} ${m.home_team}</span><span class="score">${homeScoreDisplay} – ${awayScoreDisplay}</span><span>${m.away_team} ${flag(m.away_team)}</span>${penInfo}${nextInfo}</div>`;
     }
     html += `</details>`;
   }
