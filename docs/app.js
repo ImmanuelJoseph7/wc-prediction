@@ -296,7 +296,7 @@ function render() {
 function renderPredict() {
   const now = new Date();
   const cutoff = new Date(now.getTime() + 48 * 60 * 60 * 1000).toISOString();
-  const upcoming = matches.filter(m => m.datetime > now.toISOString() && m.datetime <= cutoff && (m.status === "SCHEDULED" || m.status === "TIMED"));
+  const upcoming = matches.filter(m => m.datetime > now.toISOString() && (m.status === "SCHEDULED" || m.status === "TIMED") && m.home_team && m.away_team && (isKnockoutStage(m.stage) || m.datetime <= cutoff));
   const container = document.getElementById("matches-list");
 
   if (!upcoming.length) { container.innerHTML = "<p>No upcoming matches to predict.</p>"; return; }
