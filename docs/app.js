@@ -111,12 +111,13 @@ function showSignedIn() {
 })();
 
 async function loadData() {
+  const GAME_ID = 1; // WC 2026 - will be dynamic in Phase 2
   const [m, p, u] = await Promise.all([
-    sb("matches", "select=*&order=kickoff.asc"),
-    sb("predictions", "select=*"),
+    sb("matches_v2", `game_id=eq.${GAME_ID}&select=*&order=kickoff.asc`),
+    sb("predictions_v2", `game_id=eq.${GAME_ID}&select=*`),
     sb("users", "select=name,pin_hash"),
   ]);
-  matches = m.map(r => ({id: r.id, home_team: r.home_team, away_team: r.away_team, group: r.group_name, stage: r.stage, datetime: r.kickoff, status: r.status, home_score: r.home_score, away_score: r.away_score, pen_winner: r.pen_winner, pen_home_score: r.pen_home_score, pen_away_score: r.pen_away_score}));
+  matches = m.map(r => ({id: r.id, external_id: r.external_id, home_team: r.home_team, away_team: r.away_team, group: r.group_name, stage: r.stage, datetime: r.kickoff, status: r.status, home_score: r.home_score, away_score: r.away_score, pen_winner: r.pen_winner, pen_home_score: r.pen_home_score, pen_away_score: r.pen_away_score}));
   predictions = p.map(r => ({user: r.user_name, match_id: r.match_id, home_score: r.home_score, away_score: r.away_score, pen_winner: r.pen_winner, submitted_at: r.submitted_at}));
   users = u;
   computeLeaderboard();
@@ -278,7 +279,7 @@ document.querySelectorAll(".bd-tab").forEach(btn => {
 
 // Render
 function render() {
-  sb("metadata", "key=eq.scores_fetched_at&select=value").then(r => {
+  sb("game_metadata", "game_id=eq.1&key=eq.scores_fetched_at&select=value").then(r => {
     if (r.length) {
       const t = new Date(r[0].value).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
       const txt = `Scores updated: ${t}`;
@@ -317,10 +318,10 @@ function renderPredict() {
     const penWinner = existing?.pen_winner || "";
     let bracketInfo = "";
     if (isKnockout) {
-      const pair = BRACKET_PAIRS.find(p => p.includes(m.id));
+      const pair = BRACKET_PAIRS.find(p => p.includes(m.external_id));
       if (pair) {
-        const otherId = pair[0] === m.id ? pair[1] : pair[0];
-        const other = matches.find(x => x.id === otherId);
+        const otherId = pair[0] === m.external_id ? pair[1] : pair[0];
+        const other = matches.find(x => x.external_id === otherId);
         if (other && other.home_team) {
           const otherWinner = other.status === "FINISHED" ? (other.pen_winner ? (other.pen_winner === "home" ? other.home_team : other.away_team) : (other.home_score > other.away_score ? other.home_team : other.away_team)) : null;
           bracketInfo = otherWinner
@@ -468,10 +469,10 @@ function renderResults() {
       const penInfo = m.pen_winner ? `<div class="pen-info">${m.pen_winner === "home" ? m.home_team : m.away_team} wins on pens</div>` : "";
       let nextInfo = "";
       if (isKnockoutStage(m.stage) && m.stage !== "FINAL" && m.stage !== "THIRD_PLACE") {
-        const pair = BRACKET_PAIRS.find(p => p.includes(m.id));
+        const pair = BRACKET_PAIRS.find(p => p.includes(m.external_id));
         if (pair) {
-          const otherId = pair[0] === m.id ? pair[1] : pair[0];
-          const other = matches.find(x => x.id === otherId);
+          const otherId = pair[0] === m.external_id ? pair[1] : pair[0];
+          const other = matches.find(x => x.external_id === otherId);
           const winner = getWinner(m);
           const otherWinner = getWinner(other);
           if (winner) {
@@ -537,8 +538,8 @@ document.getElementById("submit-preds").onclick = async () => {
   }
 
   // Upsert predictions to Supabase
-  const rows = preds.map(p => ({user_name: currentUser, match_id: p.match_id, home_score: p.home_score, away_score: p.away_score, pen_winner: p.pen_winner || null, submitted_at: new Date().toISOString()}));
-  const resp = await fetch(`${SUPABASE_URL}/rest/v1/predictions?on_conflict=user_name,match_id`, {
+  const rows = preds.map(p => ({game_id: 1, user_name: currentUser, match_id: p.match_id, home_score: p.home_score, away_score: p.away_score, pen_winner: p.pen_winner || null, submitted_at: new Date().toISOString()}));
+  const resp = await fetch(`${SUPABASE_URL}/rest/v1/predictions_v2?on_conflict=game_id,user_name,match_id`, {
     method: "POST",
     headers: {...HEADERS, "Content-Type": "application/json", "Prefer": "return=minimal,resolution=merge-duplicates"},
     body: JSON.stringify(rows)

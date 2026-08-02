@@ -58,11 +58,11 @@ document.getElementById("login-btn").onclick = async () => {
 
 async function render() {
   const [matchesRaw, predsRaw, usersRaw] = await Promise.all([
-    sb("matches", "select=*&order=kickoff.asc"),
-    sb("predictions", "select=*"),
+    sb("matches_v2", "game_id=eq.1&select=*&order=kickoff.asc"),
+    sb("predictions_v2", "game_id=eq.1&select=*"),
     sb("users", "select=name")
   ]);
-  const matches = matchesRaw.map(r => ({id: r.id, home_team: r.home_team, away_team: r.away_team, datetime: r.kickoff, status: r.status}));
+  const matches = matchesRaw.map(r => ({id: r.id, external_id: r.external_id, home_team: r.home_team, away_team: r.away_team, datetime: r.kickoff, status: r.status}));
   const predictions = predsRaw.map(r => ({user: r.user_name, match_id: r.match_id, home_score: r.home_score, away_score: r.away_score, pen_winner: r.pen_winner}));
 
   const upcoming = matches.filter(m => m.status !== "FINISHED").sort((a, b) => a.datetime.localeCompare(b.datetime));

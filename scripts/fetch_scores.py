@@ -1,28 +1,50 @@
 """Fetch latest match scores from football-data.org and update Supabase."""
 import os
 import requests
+from datetime import datetime, timezone
 
 API_KEY = os.environ["FOOTBALL_API_KEY"]
 SUPABASE_URL = os.environ["SUPABASE_URL"]
 SUPABASE_KEY = os.environ["SUPABASE_SERVICE_KEY"]
 HEADERS = {"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}", "Content-Type": "application/json", "Prefer": "return=minimal"}
+READ_HEADERS = {"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}"}
 
-URL = "https://api.football-data.org/v4/competitions/WC/matches?season=2026"
+API_BASE = "https://api.football-data.org/v4/competitions"
 
 
-def main():
-    resp = requests.get(URL, headers={"X-Auth-Token": API_KEY})
+def get_active_games():
+    """Get all active games from Supabase."""
+    r = requests.get(
+        f"{SUPABASE_URL}/rest/v1/games?status=eq.active&select=id,competition_code,season",
+        headers=READ_HEADERS
+    )
+    return r.json()
+
+
+def fetch_and_update(game):
+    """Fetch scores for a game and update Supabase."""
+    game_id = game["id"]
+    comp_code = game["competition_code"]
+    season = game["season"]
+
+    # Fetch from football-data.org
+    resp = requests.get(
+        f"{API_BASE}/{comp_code}/matches?season={season}",
+        headers={"X-Auth-Token": API_KEY}
+    )
     resp.raise_for_status()
     api_matches = resp.json()["matches"]
 
-    # Get current matches from Supabase
-    r = requests.get(f"{SUPABASE_URL}/rest/v1/matches?select=id,status,home_score,away_score,home_team,away_team",
-                     headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}"})
-    local = {m["id"]: m for m in r.json()}
+    # Get current matches from Supabase (new table)
+    r = requests.get(
+        f"{SUPABASE_URL}/rest/v1/matches_v2?game_id=eq.{game_id}&select=id,external_id,status,home_score,away_score,home_team,away_team",
+        headers=READ_HEADERS
+    )
+    local_by_ext = {m["external_id"]: m for m in r.json()}
 
     updated = 0
     for api in api_matches:
-        mid = api["id"]
+        ext_id = api["id"]
         score = api["score"]
         new_status = api["status"]
         new_home_team = api["homeTeam"]["name"]
@@ -32,7 +54,6 @@ def main():
         is_pens = score.get("duration") == "PENALTY_SHOOTOUT"
 
         # For penalty matches, derive scores from the components
-        # fullTime includes pen goals, so: pen goals = fullTime - regularTime - extraTime
         if is_pens:
             ft_home = score["fullTime"]["home"]
             ft_away = score["fullTime"]["away"]
@@ -45,7 +66,7 @@ def main():
             if rt_home is None or ft_home is None:
                 continue
 
-            new_home = rt_home + (et_home or 0)  # Match score is 90min + extra time
+            new_home = rt_home + (et_home or 0)
             new_away = rt_away + (et_away or 0)
             new_pen_home = ft_home - rt_home - (et_home or 0)
             new_pen_away = ft_away - rt_away - (et_away or 0)
@@ -56,7 +77,6 @@ def main():
             elif new_pen_away > new_pen_home:
                 new_pen_winner = "away"
             else:
-                # Shouldn't happen in a valid shootout, skip until API settles
                 continue
         else:
             new_home = score["fullTime"]["home"]
@@ -65,8 +85,10 @@ def main():
             new_pen_home = None
             new_pen_away = None
 
-        if mid in local:
-            match = local[mid]
+        if ext_id in local_by_ext:
+            match = local_by_ext[ext_id]
+            internal_id = match["id"]
+
             # Never overwrite existing scores with null
             if match["home_score"] is not None and new_home is None:
                 continue
@@ -75,6 +97,7 @@ def main():
                 new_home_team = match["home_team"]
             if match["away_team"] is not None and new_away_team is None:
                 new_away_team = match["away_team"]
+
             if (match["status"] != new_status or match["home_score"] != new_home or
                     match["away_score"] != new_away or match["home_team"] != new_home_team or
                     match["away_team"] != new_away_team):
@@ -92,15 +115,29 @@ def main():
                     payload["pen_home_score"] = new_pen_home
                 if new_pen_away is not None:
                     payload["pen_away_score"] = new_pen_away
-                requests.patch(f"{SUPABASE_URL}/rest/v1/matches?id=eq.{mid}", headers=HEADERS, json=payload)
+                requests.patch(
+                    f"{SUPABASE_URL}/rest/v1/matches_v2?id=eq.{internal_id}",
+                    headers=HEADERS, json=payload
+                )
                 updated += 1
 
-    print(f"Updated {updated} match(es)." if updated else "No changes.")
+    print(f"[{comp_code}] Updated {updated} match(es)." if updated else f"[{comp_code}] No changes.")
 
     # Update last fetched timestamp
-    from datetime import datetime, timezone
-    requests.patch(f"{SUPABASE_URL}/rest/v1/metadata?key=eq.scores_fetched_at",
-                   headers=HEADERS, json={"value": datetime.now(timezone.utc).isoformat()})
+    requests.post(
+        f"{SUPABASE_URL}/rest/v1/game_metadata",
+        headers={**HEADERS, "Prefer": "return=minimal,resolution=merge-duplicates"},
+        json={"game_id": game_id, "key": "scores_fetched_at", "value": datetime.now(timezone.utc).isoformat()}
+    )
+
+
+def main():
+    games = get_active_games()
+    if not games:
+        print("No active games.")
+        return
+    for game in games:
+        fetch_and_update(game)
 
 
 if __name__ == "__main__":
