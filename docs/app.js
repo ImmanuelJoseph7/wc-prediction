@@ -15,9 +15,20 @@ const FLAGS = {
   "Switzerland":"ch","Tunisia":"tn","Turkey":"tr","United States":"us",
   "Uruguay":"uy","Uzbekistan":"uz"
 };
+const CRESTS = {
+  "Arsenal FC":"57","Aston Villa FC":"58","Chelsea FC":"61","Everton FC":"62",
+  "Fulham FC":"63","Liverpool FC":"64","Manchester City FC":"65","Manchester United FC":"66",
+  "Newcastle United FC":"67","Sunderland AFC":"71","Tottenham Hotspur FC":"73",
+  "Hull City AFC":"322","Leeds United FC":"341","Ipswich Town FC":"349",
+  "Nottingham Forest FC":"351","Crystal Palace FC":"354","Brighton & Hove Albion FC":"397",
+  "Brentford FC":"402","AFC Bournemouth":"bournemouth","Coventry City FC":"1076"
+};
 const flag = (team) => {
   const code = FLAGS[team];
-  return code ? `<img src="https://flagcdn.com/24x18/${code}.png" alt="${team}" style="vertical-align:middle;margin:0 4px">` : "";
+  if (code) return `<img src="https://flagcdn.com/24x18/${code}.png" alt="${team}" style="vertical-align:middle;margin:0 4px">`;
+  const crest = CRESTS[team];
+  if (crest) return `<img src="https://crests.football-data.org/${crest}.png" alt="${team}" style="vertical-align:middle;margin:0 4px;height:18px;width:auto">`;
+  return "";
 };
 
 const TLA = {
