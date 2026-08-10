@@ -399,3 +399,12 @@ dialog input {
 .game-join-btn:hover { background: #388e3c; }
 #game-header { margin-bottom: 0.5rem; }
 #game-header a { text-decoration: none; }
+
+
+/* Matchday navigation */
+.matchday-nav { display: flex; align-items: center; justify-content: center; gap: 1rem; margin-bottom: 1rem; }
+.matchday-nav button { padding: 0.3rem 0.75rem; border: 1px solid #ddd; border-radius: 4px; background: #f5f7fa; cursor: pointer; font-size: 1rem; }
+.matchday-nav button:disabled { opacity: 0.3; cursor: not-allowed; }
+.matchday-nav button:hover:not(:disabled) { background: #e3e8ef; }
+.match-past { opacity: 0.6; }
+.match-past input { background: #f0f0f0; }

@@ -167,6 +167,7 @@ async function joinGame(gameId) {
 async function enterGame(gameId) {
   activeGameId = gameId;
   activeGame = allGames.find(g => g.id === gameId);
+  predictMatchday = null;
   sessionStorage.setItem("activeGameId", gameId);
 
   // Hide dashboard, show game view
@@ -250,18 +251,19 @@ const BRACKET_PAIRS = [
 ];
 
 function scoreMatch(p, m) {
+  const rules = activeGame ? activeGame.scoring_rules : {exact_score: 7, correct_outcome: 2, penalty_winner_bonus: 3, correct_advancing_team: 2};
   let pts = 0, exact = false, correctWinner = false;
   if (p.home_score === m.home_score && p.away_score === m.away_score) {
-    pts = 7; exact = true; correctWinner = true;
+    pts = rules.exact_score; exact = true; correctWinner = true;
   } else if (Math.sign(p.home_score - p.away_score) === Math.sign(m.home_score - m.away_score)) {
-    pts = 2; correctWinner = true;
+    pts = rules.correct_outcome; correctWinner = true;
   } else if (m.pen_winner) {
     // Match went to pens (draw) but user predicted a winner — check if they picked the advancing team
     const predWinner = p.home_score > p.away_score ? "home" : p.away_score > p.home_score ? "away" : null;
-    if (predWinner && predWinner === m.pen_winner) { pts = 2; correctWinner = true; }
+    if (predWinner && predWinner === m.pen_winner) { pts = rules.correct_advancing_team || rules.correct_outcome; correctWinner = true; }
   }
-  // +3 for correct penalty winner
-  if (m.pen_winner && p.pen_winner && p.pen_winner === m.pen_winner) { pts += 3; }
+  // Penalty winner bonus
+  if (m.pen_winner && p.pen_winner && p.pen_winner === m.pen_winner) { pts += rules.penalty_winner_bonus || 0; }
   return {pts, exact, correctWinner};
 }
 
@@ -413,27 +415,96 @@ function render() {
   renderScoring();
 }
 
+let predictMatchday = null; // for matchday navigation
+
 function renderPredict() {
   const now = new Date();
-  const cutoff = new Date(now.getTime() + 48 * 60 * 60 * 1000).toISOString();
-  const upcoming = matches.filter(m => m.datetime > now.toISOString() && (m.status === "SCHEDULED" || m.status === "TIMED") && m.home_team && m.away_team && (isKnockoutStage(m.stage) || m.datetime <= cutoff));
   const container = document.getElementById("matches-list");
+  let upcoming;
 
-  if (!upcoming.length) { container.innerHTML = "<p>No upcoming matches to predict.</p>"; return; }
+  if (activeGame && activeGame.prediction_window === 'matchday') {
+    // Matchday-based: show all matches for the selected matchday
+    // Find the next matchday that has unfinished matches
+    if (predictMatchday === null) {
+      const matchdays = [...new Set(matches.filter(m => m.matchday).map(m => m.matchday))].sort((a, b) => a - b);
+      predictMatchday = matchdays.find(md => matches.some(m => m.matchday === md && m.status !== "FINISHED")) || matchdays[matchdays.length - 1] || 1;
+    }
 
-  container.innerHTML = upcoming.map(m => {
+    const mdMatches = matches.filter(m => m.matchday === predictMatchday && m.home_team && m.away_team);
+    const maxMatchday = Math.max(...matches.filter(m => m.matchday).map(m => m.matchday));
+    const minMatchday = Math.min(...matches.filter(m => m.matchday).map(m => m.matchday));
+
+    // Navigation header
+    let navHtml = `<div class="matchday-nav">
+      <button class="md-prev" ${predictMatchday <= minMatchday ? 'disabled' : ''}>◀</button>
+      <strong>Matchday ${predictMatchday}</strong>
+      <button class="md-next" ${predictMatchday >= maxMatchday ? 'disabled' : ''}>▶</button>
+    </div>`;
+
+    if (!mdMatches.length) {
+      container.innerHTML = navHtml + "<p>No matches for this matchday.</p>";
+    } else {
+      upcoming = mdMatches.sort((a, b) => a.datetime.localeCompare(b.datetime));
+      container.innerHTML = navHtml + renderMatchCards(upcoming, now);
+      document.getElementById("submit-preds").disabled = false;
+    }
+
+    // Nav handlers
+    container.querySelector(".md-prev")?.addEventListener("click", () => { predictMatchday--; renderPredict(); });
+    container.querySelector(".md-next")?.addEventListener("click", () => { predictMatchday++; renderPredict(); });
+
+  } else {
+    // Time-based: 48h for group stage, all confirmed for knockout
+    const cutoff = new Date(now.getTime() + 48 * 60 * 60 * 1000).toISOString();
+    upcoming = matches.filter(m => m.datetime > now.toISOString() && (m.status === "SCHEDULED" || m.status === "TIMED") && m.home_team && m.away_team && (isKnockoutStage(m.stage) || m.datetime <= cutoff));
+
+    if (!upcoming.length) { container.innerHTML = "<p>No upcoming matches to predict.</p>"; return; }
+
+    container.innerHTML = renderMatchCards(upcoming, now);
+    document.getElementById("submit-preds").disabled = false;
+  }
+
+  // Show pen picker for knockout draws
+  document.querySelectorAll(".match-card").forEach(card => {
+    const hInput = card.querySelector(".home-score");
+    const aInput = card.querySelector(".away-score");
+    const penRow = card.querySelector(".pen-row");
+    if (!penRow) return;
+    const toggle = () => {
+      if (hInput.value !== "" && aInput.value !== "" && hInput.value === aInput.value) {
+        penRow.classList.remove("hidden");
+      } else {
+        penRow.classList.add("hidden");
+        penRow.querySelectorAll(".pen-btn").forEach(b => b.classList.remove("pen-active"));
+      }
+    };
+    hInput.addEventListener("input", toggle);
+    aInput.addEventListener("input", toggle);
+    toggle();
+    penRow.querySelectorAll(".pen-btn").forEach(btn => {
+      btn.onclick = () => {
+        penRow.querySelectorAll(".pen-btn").forEach(b => b.classList.remove("pen-active"));
+        btn.classList.add("pen-active");
+      };
+    });
+  });
+}
+
+function renderMatchCards(matchList, now) {
+  const hasKnockout = activeGame && activeGame.scoring_rules.has_knockout;
+  return matchList.map(m => {
     const existing = predictions.find(p => p.user === currentUser && p.match_id === m.id);
     const hVal = existing ? existing.home_score : "";
     const aVal = existing ? existing.away_score : "";
     const dt = new Date(m.datetime).toLocaleString([], { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
     const diff = new Date(m.datetime) - now;
+    const isPast = diff <= 0;
     const d = Math.floor(diff / 86400000);
     const h = Math.floor((diff % 86400000) / 3600000);
     const min = Math.floor((diff % 3600000) / 60000);
     const sec = Math.floor((diff % 60000) / 1000);
-    const countdown = d > 0 ? `${d}d ${h}h ${min}m` : h > 0 ? `${h}h ${min}m` : `${min}m ${sec}s`;
-    const groupLabel = (m.group || m.stage).replace("GROUP_", "Group ").replace("_", " ");
-    const isKnockout = m.stage !== "GROUP_STAGE";
+    const countdown = isPast ? (m.status === "FINISHED" ? "✓ Finished" : "🔴 Live") : d > 0 ? `${d}d ${h}h ${min}m` : h > 0 ? `${h}h ${min}m` : `${min}m ${sec}s`;
+    const isKnockout = hasKnockout && m.stage !== "GROUP_STAGE" && m.stage !== "REGULAR_SEASON";
     const penWinner = existing?.pen_winner || "";
     let bracketInfo = "";
     if (isKnockout) {
@@ -456,98 +527,108 @@ function renderPredict() {
         <button type="button" class="pen-btn ${penWinner === "away" ? "pen-active" : ""}" data-val="away">${flag(m.away_team)}${TLA[m.away_team] || m.away_team}</button>
       </div>
     </div>` : "";
-    return `<div class="match-card" data-id="${m.id}">
-      <span class="group-tag">${groupLabel}</span>
+    const disabled = isPast ? "disabled" : "";
+    return `<div class="match-card ${isPast ? 'match-past' : ''}" data-id="${m.id}">
       <div class="match-time"><strong>${dt}</strong></div>
       <div class="score-row">
         <span class="team home">${m.home_team} ${flag(m.home_team)}</span>
-        <input type="number" min="0" max="20" class="home-score" value="${hVal}">
+        <input type="number" min="0" max="20" class="home-score" value="${hVal}" ${disabled}>
         <span class="vs">–</span>
-        <input type="number" min="0" max="20" class="away-score" value="${aVal}">
+        <input type="number" min="0" max="20" class="away-score" value="${aVal}" ${disabled}>
         <span class="team away">${flag(m.away_team)} ${m.away_team}</span>
       </div>
       ${penHtml}
       ${bracketInfo}
-      <div class="form-row">
-        <div class="form-col">${teamForm(m.home_team)}</div>
-        <div class="form-col">${teamForm(m.away_team)}</div>
-      </div>
       <div class="countdown">⏱ ${countdown}</div>
     </div>`;
   }).join("");
-
-  document.getElementById("submit-preds").disabled = false;
-
-  // Show pen picker for knockout draws
-  document.querySelectorAll(".match-card").forEach(card => {
-    const hInput = card.querySelector(".home-score");
-    const aInput = card.querySelector(".away-score");
-    const penRow = card.querySelector(".pen-row");
-    if (!penRow) return;
-    const toggle = () => {
-      if (hInput.value !== "" && aInput.value !== "" && hInput.value === aInput.value) {
-        penRow.classList.remove("hidden");
-      } else {
-        penRow.classList.add("hidden");
-        penRow.querySelectorAll(".pen-btn").forEach(b => b.classList.remove("pen-active"));
-      }
-    };
-    hInput.addEventListener("input", toggle);
-    aInput.addEventListener("input", toggle);
-    toggle();
-    // Toggle button clicks
-    penRow.querySelectorAll(".pen-btn").forEach(btn => {
-      btn.onclick = () => {
-        penRow.querySelectorAll(".pen-btn").forEach(b => b.classList.remove("pen-active"));
-        btn.classList.add("pen-active");
-      };
-    });
-  });
 }
 
 function renderLeaderboard() {
-  let data = activePhase === "group" ? lbGroup : activePhase === "knockout" ? lbKnockout : lbCombined;
-  if (activePhase === "combined") data = [...data].sort((a, b) => (b.games_played ? b.total_points / b.games_played : 0) - (a.games_played ? a.total_points / a.games_played : 0));
+  const hasKnockout = activeGame && activeGame.scoring_rules.has_knockout;
+  const lbTabs = document.querySelector("#tab-leaderboard .lb-tabs");
+
+  if (hasKnockout) {
+    lbTabs.style.display = "";
+  } else {
+    lbTabs.style.display = "none";
+  }
+
+  let data;
+  if (!hasKnockout) {
+    // League format: single overall leaderboard
+    data = lbCombined;
+  } else {
+    data = activePhase === "group" ? lbGroup : activePhase === "knockout" ? lbKnockout : lbCombined;
+    if (activePhase === "combined") data = [...data].sort((a, b) => (b.games_played ? b.total_points / b.games_played : 0) - (a.games_played ? a.total_points / a.games_played : 0));
+  }
   leaderboard = data;
   const thead = document.querySelector("#leaderboard-table thead tr");
   const tbody = document.querySelector("#leaderboard-table tbody");
   const medals = ["🥇", "🥈", "🥉"];
-  const isGroup = activePhase === "group";
-  const isCombined = activePhase === "combined";
-  thead.innerHTML = isGroup
-    ? '<th>#</th><th>Name</th><th>MP</th><th>GC</th><th>PTS</th><th>✓</th><th>🎯</th><th>Recent</th>'
-    : isCombined
-    ? '<th>#</th><th>Name</th><th>MP</th><th>GC</th><th>PTS</th><th>PPG</th><th>🎯</th><th>✓</th><th>❌</th><th>🅿️</th>'
-    : '<th>#</th><th>Name</th><th>MP</th><th>GC</th><th>PTS</th><th>🎯</th><th>✓</th><th>❌</th><th>🅿️</th>';
-  tbody.innerHTML = data.map((u, i) => {
-    if (isGroup) {
+  const rules = activeGame ? activeGame.scoring_rules : {};
+  const exactPts = rules.exact_score || 7;
+  const correctPts = rules.correct_outcome || 2;
+
+  if (!hasKnockout) {
+    // League format
+    thead.innerHTML = '<th>#</th><th>Name</th><th>MP</th><th>GC</th><th>PTS</th><th>🎯</th><th>✓</th><th>❌</th><th>Recent</th>';
+    tbody.innerHTML = data.map((u, i) => {
       const recent = (u.match_results || []).sort((a, b) => {
         const ma = matches.find(m => m.id === a.match_id);
         const mb = matches.find(m => m.id === b.match_id);
         return (ma?.datetime || "").localeCompare(mb?.datetime || "");
       }).slice(-5).reverse().map(r =>
-        r.points >= 7 ? '<span class="dot dot-exact">●</span>' : r.points >= 2 ? '<span class="dot dot-correct">●</span>' : '<span class="dot dot-wrong">●</span>'
+        r.points >= exactPts ? '<span class="dot dot-exact">●</span>' : r.points >= correctPts ? '<span class="dot dot-correct">●</span>' : '<span class="dot dot-wrong">●</span>'
       ).join("");
-      return `<tr><td>${medals[i] || i + 1}</td><td>${u.user}</td><td>${u.predictions_made}</td><td>${u.games_played}</td><td><strong>${u.total_points}</strong></td><td>${u.correct_winners}</td><td>${u.exact_scores}</td><td class="recent">${recent}</td></tr>`;
-    }
-    const ppg = u.games_played ? (u.total_points / u.games_played).toFixed(2) : "–";
-    if (isCombined) return `<tr><td>${medals[i] || i + 1}</td><td>${u.user}</td><td>${u.predictions_made}</td><td>${u.games_played}</td><td><strong>${u.total_points}</strong></td><td><strong>${ppg}</strong></td><td>${u.exact_scores}</td><td>${u.correct_winners}</td><td>${u.wrong}</td><td>${u.pen_correct}</td></tr>`;
-    return `<tr><td>${medals[i] || i + 1}</td><td>${u.user}</td><td>${u.predictions_made}</td><td>${u.games_played}</td><td><strong>${u.total_points}</strong></td><td>${u.exact_scores}</td><td>${u.correct_winners}</td><td>${u.wrong}</td><td>${u.pen_correct}</td></tr>`;
-  }).join("");
-  document.getElementById("lb-legend").textContent = isGroup
-    ? "MP = Matches Predicted · GC = Games Competed · PTS = Points · ✓ = Correct Outcome · 🎯 = Exact Score"
-    : isCombined
-    ? "MP = Matches Predicted · GC = Games Competed · PTS = Points · PPG = Points Per Game · 🎯 = Exact (7) · ✓ = Correct Outcome (2) · ❌ = Wrong (0) · 🅿️ = Pen Pick (3)"
-    : "MP = Matches Predicted · GC = Games Competed · PTS = Points · 🎯 = Exact (7) · ✓ = Correct Outcome (2) · ❌ = Wrong (0) · 🅿️ = Pen Pick (3)";
+      return `<tr><td>${medals[i] || i + 1}</td><td>${u.user}</td><td>${u.predictions_made}</td><td>${u.games_played}</td><td><strong>${u.total_points}</strong></td><td>${u.exact_scores}</td><td>${u.correct_winners}</td><td>${u.wrong}</td><td class="recent">${recent}</td></tr>`;
+    }).join("");
+    document.getElementById("lb-legend").textContent = `MP = Matches Predicted · GC = Games Competed · PTS = Points · 🎯 = Exact (${exactPts}) · ✓ = Correct Outcome (${correctPts}) · ❌ = Wrong (0)`;
+  } else {
+    // Cup format (existing logic)
+    const isGroup = activePhase === "group";
+    const isCombined = activePhase === "combined";
+    thead.innerHTML = isGroup
+      ? '<th>#</th><th>Name</th><th>MP</th><th>GC</th><th>PTS</th><th>✓</th><th>🎯</th><th>Recent</th>'
+      : isCombined
+      ? '<th>#</th><th>Name</th><th>MP</th><th>GC</th><th>PTS</th><th>PPG</th><th>🎯</th><th>✓</th><th>❌</th><th>🅿️</th>'
+      : '<th>#</th><th>Name</th><th>MP</th><th>GC</th><th>PTS</th><th>🎯</th><th>✓</th><th>❌</th><th>🅿️</th>';
+    tbody.innerHTML = data.map((u, i) => {
+      if (isGroup) {
+        const recent = (u.match_results || []).sort((a, b) => {
+          const ma = matches.find(m => m.id === a.match_id);
+          const mb = matches.find(m => m.id === b.match_id);
+          return (ma?.datetime || "").localeCompare(mb?.datetime || "");
+        }).slice(-5).reverse().map(r =>
+          r.points >= exactPts ? '<span class="dot dot-exact">●</span>' : r.points >= correctPts ? '<span class="dot dot-correct">●</span>' : '<span class="dot dot-wrong">●</span>'
+        ).join("");
+        return `<tr><td>${medals[i] || i + 1}</td><td>${u.user}</td><td>${u.predictions_made}</td><td>${u.games_played}</td><td><strong>${u.total_points}</strong></td><td>${u.correct_winners}</td><td>${u.exact_scores}</td><td class="recent">${recent}</td></tr>`;
+      }
+      const ppg = u.games_played ? (u.total_points / u.games_played).toFixed(2) : "–";
+      if (isCombined) return `<tr><td>${medals[i] || i + 1}</td><td>${u.user}</td><td>${u.predictions_made}</td><td>${u.games_played}</td><td><strong>${u.total_points}</strong></td><td><strong>${ppg}</strong></td><td>${u.exact_scores}</td><td>${u.correct_winners}</td><td>${u.wrong}</td><td>${u.pen_correct}</td></tr>`;
+      return `<tr><td>${medals[i] || i + 1}</td><td>${u.user}</td><td>${u.predictions_made}</td><td>${u.games_played}</td><td><strong>${u.total_points}</strong></td><td>${u.exact_scores}</td><td>${u.correct_winners}</td><td>${u.wrong}</td><td>${u.pen_correct}</td></tr>`;
+    }).join("");
+    document.getElementById("lb-legend").textContent = isGroup
+      ? "MP = Matches Predicted · GC = Games Competed · PTS = Points · ✓ = Correct Outcome · 🎯 = Exact Score"
+      : isCombined
+      ? `MP = Matches Predicted · GC = Games Competed · PTS = Points · PPG = Points Per Game · 🎯 = Exact (${exactPts}) · ✓ = Correct Outcome (${correctPts}) · ❌ = Wrong (0) · 🅿️ = Pen Pick`
+      : `MP = Matches Predicted · GC = Games Competed · PTS = Points · 🎯 = Exact (${exactPts}) · ✓ = Correct Outcome (${correctPts}) · ❌ = Wrong (0) · 🅿️ = Pen Pick`;
+  }
 }
 
 function renderBreakdown() {
+  const hasKnockout = activeGame && activeGame.scoring_rules.has_knockout;
+  const bdTabs = document.querySelector("#tab-breakdown .lb-tabs");
+  if (hasKnockout) { bdTabs.style.display = ""; } else { bdTabs.style.display = "none"; }
+
   let finished = matches.filter(m => m.status === "FINISHED").sort((a, b) => b.datetime.localeCompare(a.datetime));
-  if (bdPhase === "group") finished = finished.filter(m => !isKnockoutStage(m.stage));
-  else if (bdPhase === "knockout") finished = finished.filter(m => isKnockoutStage(m.stage));
+  if (hasKnockout) {
+    if (bdPhase === "group") finished = finished.filter(m => !isKnockoutStage(m.stage));
+    else if (bdPhase === "knockout") finished = finished.filter(m => isKnockoutStage(m.stage));
+  }
   if (!finished.length) { document.getElementById("breakdown-wrap").innerHTML = "<p>No completed matches yet.</p>"; return; }
 
-  const bdData = bdPhase === "group" ? lbGroup : bdPhase === "knockout" ? lbKnockout : lbCombined;
+  const bdData = hasKnockout ? (bdPhase === "group" ? lbGroup : bdPhase === "knockout" ? lbKnockout : lbCombined) : lbCombined;
   const sorted = [...bdData].sort((a, b) => b.total_points - a.total_points);
   const initials = sorted.map(u => u.user.split(" ").map(w => w[0]).join(""));
 
