@@ -226,14 +226,16 @@ function showDashboard() {
 })();
 
 async function loadData() {
-  const [m, p, u] = await Promise.all([
+  const [m, p, u, gu] = await Promise.all([
     sb("matches_v2", `game_id=eq.${activeGameId}&select=*&order=kickoff.asc`),
     sb("predictions_v2", `game_id=eq.${activeGameId}&select=*`),
     sb("users", "select=name,pin_hash"),
+    sb("game_users", `game_id=eq.${activeGameId}&select=user_name`),
   ]);
-  matches = m.map(r => ({id: r.id, external_id: r.external_id, home_team: r.home_team, away_team: r.away_team, group: r.group_name, stage: r.stage, datetime: r.kickoff, status: r.status, home_score: r.home_score, away_score: r.away_score, pen_winner: r.pen_winner, pen_home_score: r.pen_home_score, pen_away_score: r.pen_away_score}));
+  matches = m.map(r => ({id: r.id, external_id: r.external_id, home_team: r.home_team, away_team: r.away_team, group: r.group_name, stage: r.stage, matchday: r.matchday, datetime: r.kickoff, status: r.status, home_score: r.home_score, away_score: r.away_score, pen_winner: r.pen_winner, pen_home_score: r.pen_home_score, pen_away_score: r.pen_away_score}));
   predictions = p.map(r => ({user: r.user_name, match_id: r.match_id, home_score: r.home_score, away_score: r.away_score, pen_winner: r.pen_winner, submitted_at: r.submitted_at}));
-  users = u;
+  const memberNames = new Set(gu.map(g => g.user_name));
+  users = u.filter(usr => memberNames.has(usr.name));
   computeLeaderboard();
 }
 
