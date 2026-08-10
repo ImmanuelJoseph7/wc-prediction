@@ -37,7 +37,7 @@ def fetch_and_update(game):
 
     # Get current matches from Supabase (new table)
     r = requests.get(
-        f"{SUPABASE_URL}/rest/v1/matches_v2?game_id=eq.{game_id}&select=id,external_id,status,home_score,away_score,home_team,away_team",
+        f"{SUPABASE_URL}/rest/v1/matches_v2?game_id=eq.{game_id}&select=id,external_id,status,home_score,away_score,home_team,away_team,matchday,kickoff",
         headers=READ_HEADERS
     )
     local_by_ext = {m["external_id"]: m for m in r.json()}
@@ -89,6 +89,9 @@ def fetch_and_update(game):
             match = local_by_ext[ext_id]
             internal_id = match["id"]
 
+            new_matchday = api.get("matchday")
+            new_kickoff = api.get("utcDate")
+
             # Never overwrite existing scores with null
             if match["home_score"] is not None and new_home is None:
                 continue
@@ -100,12 +103,17 @@ def fetch_and_update(game):
 
             if (match["status"] != new_status or match["home_score"] != new_home or
                     match["away_score"] != new_away or match["home_team"] != new_home_team or
-                    match["away_team"] != new_away_team):
+                    match["away_team"] != new_away_team or
+                    match.get("matchday") != new_matchday or match.get("kickoff") != new_kickoff):
                 payload = {"status": new_status}
                 if new_home_team is not None:
                     payload["home_team"] = new_home_team
                 if new_away_team is not None:
                     payload["away_team"] = new_away_team
+                if new_matchday is not None:
+                    payload["matchday"] = new_matchday
+                if new_kickoff is not None:
+                    payload["kickoff"] = new_kickoff
                 if new_home is not None:
                     payload["home_score"] = new_home
                     payload["away_score"] = new_away
