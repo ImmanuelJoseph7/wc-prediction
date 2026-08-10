@@ -68,6 +68,9 @@ function teamForm(team) {
 
 let currentUser = sessionStorage.getItem("wc_user");
 let currentPin = sessionStorage.getItem("wc_pin");
+let activeGameId = sessionStorage.getItem("activeGameId") ? parseInt(sessionStorage.getItem("activeGameId")) : null;
+let activeGame = null;
+let allGames = [];
 let matches = [];
 let predictions = [];
 let leaderboard = [];
@@ -94,27 +97,137 @@ function showSignedIn() {
     e.preventDefault();
     sessionStorage.removeItem("wc_user");
     sessionStorage.removeItem("wc_pin");
+    sessionStorage.removeItem("activeGameId");
     location.reload();
   };
 }
 
+async function loadGames() {
+  const [games, gameUsers] = await Promise.all([
+    sb("games", "select=*&order=created_at.desc"),
+    sb("game_users", `user_name=eq.${encodeURIComponent(currentUser)}&select=game_id`)
+  ]);
+  allGames = games;
+  const joinedIds = new Set(gameUsers.map(gu => gu.game_id));
+  const joined = games.filter(g => joinedIds.has(g.id));
+  const available = games.filter(g => !joinedIds.has(g.id));
+  renderDashboard(joined, available);
+}
+
+function renderDashboard(joined, available) {
+  const joinedEl = document.getElementById("joined-games");
+  const availableEl = document.getElementById("available-games");
+
+  if (joined.length) {
+    joinedEl.innerHTML = joined.map(g => `
+      <div class="game-card" data-game-id="${g.id}">
+        <strong>${g.name}</strong>
+        <small class="game-status ${g.status}">${g.status}</small>
+        <button class="game-enter-btn" data-game-id="${g.id}">Enter</button>
+      </div>
+    `).join("");
+  } else {
+    joinedEl.innerHTML = "<p>You haven't joined any games yet.</p>";
+  }
+
+  if (available.length) {
+    availableEl.innerHTML = available.map(g => `
+      <div class="game-card" data-game-id="${g.id}">
+        <strong>${g.name}</strong>
+        <small class="game-status ${g.status}">${g.status}</small>
+        <button class="game-join-btn" data-game-id="${g.id}">Join</button>
+      </div>
+    `).join("");
+  } else {
+    availableEl.innerHTML = "<p>No other games available.</p>";
+  }
+
+  // Enter game handlers
+  document.querySelectorAll(".game-enter-btn").forEach(btn => {
+    btn.onclick = () => enterGame(parseInt(btn.dataset.gameId));
+  });
+
+  // Join game handlers
+  document.querySelectorAll(".game-join-btn").forEach(btn => {
+    btn.onclick = () => joinGame(parseInt(btn.dataset.gameId));
+  });
+}
+
+async function joinGame(gameId) {
+  const resp = await fetch(`${SUPABASE_URL}/rest/v1/game_users`, {
+    method: "POST",
+    headers: {...HEADERS, "Content-Type": "application/json", "Prefer": "return=minimal"},
+    body: JSON.stringify({game_id: gameId, user_name: currentUser})
+  });
+  if (resp.ok) {
+    await loadGames();
+  }
+}
+
+async function enterGame(gameId) {
+  activeGameId = gameId;
+  activeGame = allGames.find(g => g.id === gameId);
+  sessionStorage.setItem("activeGameId", gameId);
+
+  // Hide dashboard, show game view
+  document.getElementById("game-dashboard").classList.add("hidden");
+  document.getElementById("game-nav").style.display = "";
+  document.getElementById("game-header").style.display = "";
+  document.getElementById("game-header-name").textContent = activeGame.name;
+  document.querySelectorAll(".tab-content").forEach(s => s.classList.add("hidden"));
+  document.querySelector(".tab.active")?.click();
+
+  await loadData();
+  render();
+}
+
+function showDashboard() {
+  activeGameId = null;
+  activeGame = null;
+  sessionStorage.removeItem("activeGameId");
+
+  // Hide game view, show dashboard
+  document.getElementById("game-dashboard").classList.remove("hidden");
+  document.getElementById("game-nav").style.display = "none";
+  document.getElementById("game-header").style.display = "none";
+  document.querySelectorAll(".tab-content").forEach(s => s.classList.add("hidden"));
+
+  loadGames();
+}
+
 (async () => {
   if (currentUser && currentPin) {
-    await loadData();
     document.getElementById("login-dialog").close();
     if (currentUser === "Immanuel J") document.getElementById("admin-link").style.display = "block";
     showSignedIn();
-    render();
+
+    // If user has an active game, go straight to it; otherwise show dashboard
+    if (activeGameId) {
+      allGames = await sb("games", "select=*&order=created_at.desc");
+      activeGame = allGames.find(g => g.id === activeGameId);
+      if (activeGame) {
+        document.getElementById("game-header").style.display = "";
+        document.getElementById("game-header-name").textContent = activeGame.name;
+        await loadData();
+        render();
+      } else {
+        showDashboard();
+      }
+    } else {
+      document.getElementById("game-nav").style.display = "none";
+      document.querySelectorAll(".tab-content").forEach(s => s.classList.add("hidden"));
+      await loadGames();
+      document.getElementById("game-dashboard").classList.remove("hidden");
+    }
   } else {
     await populateUserSelect();
   }
 })();
 
 async function loadData() {
-  const GAME_ID = 1; // WC 2026 - will be dynamic in Phase 2
   const [m, p, u] = await Promise.all([
-    sb("matches_v2", `game_id=eq.${GAME_ID}&select=*&order=kickoff.asc`),
-    sb("predictions_v2", `game_id=eq.${GAME_ID}&select=*`),
+    sb("matches_v2", `game_id=eq.${activeGameId}&select=*&order=kickoff.asc`),
+    sb("predictions_v2", `game_id=eq.${activeGameId}&select=*`),
     sb("users", "select=name,pin_hash"),
   ]);
   matches = m.map(r => ({id: r.id, external_id: r.external_id, home_team: r.home_team, away_team: r.away_team, group: r.group_name, stage: r.stage, datetime: r.kickoff, status: r.status, home_score: r.home_score, away_score: r.away_score, pen_winner: r.pen_winner, pen_home_score: r.pen_home_score, pen_away_score: r.pen_away_score}));
@@ -198,8 +311,8 @@ document.getElementById("login-btn").onclick = async () => {
   const err = document.getElementById("login-error");
   if (!name || pin.length !== 4) { err.textContent = "Pick a name and enter 4-digit PIN."; return; }
 
-  await loadData();
   const hash = await hashPin(pin);
+  users = await sb("users", "select=name,pin_hash");
   const existing = users.find(u => u.name === name);
   if (!existing) { err.textContent = "User not found."; return; }
   if (existing.pin_hash !== hash) { err.textContent = "Wrong PIN."; return; }
@@ -211,7 +324,12 @@ document.getElementById("login-btn").onclick = async () => {
   document.getElementById("login-dialog").close();
   if (name === "Immanuel J") document.getElementById("admin-link").style.display = "block";
   showSignedIn();
-  render();
+
+  // Show game dashboard
+  document.getElementById("game-nav").style.display = "none";
+  document.querySelectorAll(".tab-content").forEach(s => s.classList.add("hidden"));
+  await loadGames();
+  document.getElementById("game-dashboard").classList.remove("hidden");
 };
 
 // Registration
@@ -279,7 +397,7 @@ document.querySelectorAll(".bd-tab").forEach(btn => {
 
 // Render
 function render() {
-  sb("game_metadata", "game_id=eq.1&key=eq.scores_fetched_at&select=value").then(r => {
+  sb("game_metadata", `game_id=eq.${activeGameId}&key=eq.scores_fetched_at&select=value`).then(r => {
     if (r.length) {
       const t = new Date(r[0].value).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
       const txt = `Scores updated: ${t}`;
@@ -292,6 +410,7 @@ function render() {
   renderLeaderboard();
   renderBreakdown();
   renderResults();
+  renderScoring();
 }
 
 function renderPredict() {
@@ -538,7 +657,7 @@ document.getElementById("submit-preds").onclick = async () => {
   }
 
   // Upsert predictions to Supabase
-  const rows = preds.map(p => ({game_id: 1, user_name: currentUser, match_id: p.match_id, home_score: p.home_score, away_score: p.away_score, pen_winner: p.pen_winner || null, submitted_at: new Date().toISOString()}));
+  const rows = preds.map(p => ({game_id: activeGameId, user_name: currentUser, match_id: p.match_id, home_score: p.home_score, away_score: p.away_score, pen_winner: p.pen_winner || null, submitted_at: new Date().toISOString()}));
   const resp = await fetch(`${SUPABASE_URL}/rest/v1/predictions_v2?on_conflict=game_id,user_name,match_id`, {
     method: "POST",
     headers: {...HEADERS, "Content-Type": "application/json", "Prefer": "return=minimal,resolution=merge-duplicates"},
@@ -555,3 +674,34 @@ document.getElementById("submit-preds").onclick = async () => {
   btn.disabled = false;
   btn.textContent = "Submit Predictions";
 };
+
+// Back to dashboard
+document.getElementById("back-to-dashboard").onclick = (e) => {
+  e.preventDefault();
+  showDashboard();
+};
+
+// Dynamic scoring tab
+function renderScoring() {
+  if (!activeGame) return;
+  const rules = activeGame.scoring_rules;
+  let html = '<table class="scoring-table">';
+  html += `<tr><td>🎯 Exact score</td><td><strong>${rules.exact_score} pts</strong></td></tr>`;
+  html += `<tr><td>✓ Correct outcome (win/draw/loss)</td><td><strong>${rules.correct_outcome} pts</strong></td></tr>`;
+  html += `<tr><td>❌ Wrong outcome</td><td><strong>${rules.wrong_outcome} pts</strong></td></tr>`;
+  html += '</table>';
+
+  if (rules.has_knockout) {
+    html += '<h3>Knockout Bonuses</h3>';
+    html += '<table class="scoring-table">';
+    if (rules.correct_advancing_team) {
+      html += `<tr><td>✓ Predicted correct advancing team (if match goes to pens)</td><td><strong>${rules.correct_advancing_team} pts</strong></td></tr>`;
+    }
+    if (rules.penalty_winner_bonus) {
+      html += `<tr><td>🅿️ Correct penalty winner pick</td><td><strong>+${rules.penalty_winner_bonus} pts</strong></td></tr>`;
+    }
+    html += '</table>';
+  }
+
+  document.getElementById("scoring-content").innerHTML = html;
+}

@@ -3,16 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Family WC Predictor 2026</title>
+  <title>Family Tipping</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <main class="container">
-    <h1>⚽ Family WC Predictor</h1>
+    <h1>⚽ Family Tipping</h1>
     <small id="signed-in-as" style="display:none;text-align:center"></small>
     <small id="admin-link" class="hidden" style="display:none;text-align:center"><a href="admin-preds.html">📋 Admin Predictions</a></small>
-    <nav>
+
+    <!-- Game switcher (visible when inside a game) -->
+    <div id="game-header" style="display:none;text-align:center;margin-bottom:0.5rem">
+      <small><strong id="game-header-name"></strong> · <a href="#" id="back-to-dashboard">← All Games</a></small>
+    </div>
+
+    <nav id="game-nav">
       <button class="tab active" data-tab="predict">Predict</button>
       <button class="tab" data-tab="leaderboard">Leaderboard</button>
       <button class="tab" data-tab="breakdown">Breakdown</button>
@@ -43,6 +49,14 @@
         </details>
       </article>
     </dialog>
+
+    <!-- Game Dashboard (shows after login, before selecting a game) -->
+    <section id="game-dashboard" class="hidden">
+      <h2>Your Games</h2>
+      <div id="joined-games"></div>
+      <h3>Available Games</h3>
+      <div id="available-games"></div>
+    </section>
 
     <!-- Predict tab -->
     <section id="tab-predict" class="tab-content">
@@ -92,31 +106,7 @@
     <!-- Scoring tab -->
     <section id="tab-scoring" class="tab-content hidden">
       <h2>How Scoring Works</h2>
-      <h3>Group Stage</h3>
-      <table class="scoring-table">
-        <tr><td>🎯 Exact score</td><td><strong>7 pts</strong></td></tr>
-        <tr><td>✓ Correct outcome (win/draw/loss)</td><td><strong>2 pts</strong></td></tr>
-        <tr><td>❌ Wrong outcome</td><td><strong>0 pts</strong></td></tr>
-      </table>
-
-      <h3>Knockout Stage</h3>
-      <p>Same as group stage, plus penalty bonuses:</p>
-      <table class="scoring-table">
-        <tr><td>🎯 Exact score</td><td><strong>7 pts</strong></td></tr>
-        <tr><td>✓ Correct outcome</td><td><strong>2 pts</strong></td></tr>
-        <tr><td>✓ Predicted correct advancing team (if match goes to pens)</td><td><strong>2 pts</strong></td></tr>
-        <tr><td>❌ Wrong outcome</td><td><strong>0 pts</strong></td></tr>
-        <tr><td>🅿️ Correct penalty winner pick</td><td><strong>+3 pts</strong></td></tr>
-      </table>
-      <p>If a knockout match ends in a draw and goes to penalties, you can pick which team wins. Get it right for a +3 bonus on top of your score prediction points.</p>
-      <p>If you predicted a winner (e.g. 0-1) and that team ends up winning on penalties, you still get 2 pts for picking the right team to advance.</p>
-
-      <h3>Leaderboard Tabs</h3>
-      <ul class="scoring-list">
-        <li><strong>Group</strong> — Points from group stage matches only</li>
-        <li><strong>Knockout</strong> — Points from knockout matches (R32, R16, QF, SF, Final)</li>
-        <li><strong>Combined</strong> — Total points across both phases, sorted by Points Per Game (PPG)</li>
-      </ul>
+      <div id="scoring-content"></div>
     </section>
   </main>
   <script src="app.js"></script>

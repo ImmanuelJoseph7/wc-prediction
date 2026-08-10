@@ -24,6 +24,7 @@
     </dialog>
 
     <section id="admin-panel" class="hidden">
+      <select id="game-select"></select>
       <div class="table-wrap" id="preds-wrap"></div>
     </section>
   </main>
@@ -34,6 +35,8 @@ const HEADERS = {"apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY
 const ADMIN_HASH = "41c991eb6a66242c0454191244278183ce58cf4a6bcd372f799e4b9cc01886af";
 const FLAGS = {"Algeria":"dz","Argentina":"ar","Australia":"au","Austria":"at","Belgium":"be","Bosnia-Herzegovina":"ba","Brazil":"br","Canada":"ca","Cape Verde Islands":"cv","Colombia":"co","Congo DR":"cd","Croatia":"hr","Curaçao":"cw","Czechia":"cz","Ecuador":"ec","Egypt":"eg","England":"gb-eng","France":"fr","Germany":"de","Ghana":"gh","Haiti":"ht","Iran":"ir","Iraq":"iq","Ivory Coast":"ci","Japan":"jp","Jordan":"jo","Mexico":"mx","Morocco":"ma","Netherlands":"nl","New Zealand":"nz","Norway":"no","Panama":"pa","Paraguay":"py","Portugal":"pt","Qatar":"qa","Saudi Arabia":"sa","Scotland":"gb-sct","Senegal":"sn","South Africa":"za","South Korea":"kr","Spain":"es","Sweden":"se","Switzerland":"ch","Tunisia":"tn","Turkey":"tr","United States":"us","Uruguay":"uy","Uzbekistan":"uz"};
 const flag = (team) => { const c = FLAGS[team]; return c ? `<img src="https://flagcdn.com/16x12/${c}.png" alt="${team}" style="vertical-align:middle">` : ""; };
+
+let activeGameId = null;
 
 async function hashPin(pin) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(pin));
@@ -53,13 +56,22 @@ document.getElementById("login-btn").onclick = async () => {
   }
   document.getElementById("admin-login").close();
   document.getElementById("admin-panel").classList.remove("hidden");
-  render();
+  await loadGameSelect();
 };
+
+async function loadGameSelect() {
+  const games = await sb("games", "select=id,name&order=created_at.desc");
+  const sel = document.getElementById("game-select");
+  sel.innerHTML = games.map(g => `<option value="${g.id}">${g.name}</option>`).join("");
+  activeGameId = games[0]?.id;
+  sel.onchange = () => { activeGameId = parseInt(sel.value); render(); };
+  render();
+}
 
 async function render() {
   const [matchesRaw, predsRaw, usersRaw] = await Promise.all([
-    sb("matches_v2", "game_id=eq.1&select=*&order=kickoff.asc"),
-    sb("predictions_v2", "game_id=eq.1&select=*"),
+    sb("matches_v2", `game_id=eq.${activeGameId}&select=*&order=kickoff.asc`),
+    sb("predictions_v2", `game_id=eq.${activeGameId}&select=*`),
     sb("users", "select=name")
   ]);
   const matches = matchesRaw.map(r => ({id: r.id, external_id: r.external_id, home_team: r.home_team, away_team: r.away_team, datetime: r.kickoff, status: r.status}));

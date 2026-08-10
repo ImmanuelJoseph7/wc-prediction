@@ -383,3 +383,19 @@ dialog input {
   }
   .result-card .score { font-size: 1.1rem; }
 }
+
+/* Game dashboard */
+#game-dashboard h2, #game-dashboard h3 { margin-top: 1rem; }
+.game-card { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; margin-bottom: 0.5rem; border: 1px solid #ddd; border-radius: 8px; background: #f9fafb; }
+.game-card strong { flex: 1; }
+.game-status { font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 4px; text-transform: uppercase; }
+.game-status.active { background: #c8e6c9; color: #1B5E20; }
+.game-status.completed { background: #e0e0e0; color: #555; }
+.game-status.upcoming { background: #fff9c4; color: #f57f17; }
+.game-enter-btn, .game-join-btn { padding: 0.3rem 0.75rem; border-radius: 4px; border: none; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
+.game-enter-btn { background: #1976d2; color: white; }
+.game-join-btn { background: #43a047; color: white; }
+.game-enter-btn:hover { background: #1565c0; }
+.game-join-btn:hover { background: #388e3c; }
+#game-header { margin-bottom: 0.5rem; }
+#game-header a { text-decoration: none; }
