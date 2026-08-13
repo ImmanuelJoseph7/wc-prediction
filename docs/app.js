@@ -116,13 +116,11 @@ async function loadGames() {
   allGames = games;
   const joinedIds = new Set(gameUsers.map(gu => gu.game_id));
   const joined = games.filter(g => joinedIds.has(g.id));
-  const available = games.filter(g => !joinedIds.has(g.id));
-  renderDashboard(joined, available);
+  renderDashboard(joined);
 }
 
-function renderDashboard(joined, available) {
+function renderDashboard(joined) {
   const joinedEl = document.getElementById("joined-games");
-  const availableEl = document.getElementById("available-games");
 
   if (joined.length) {
     joinedEl.innerHTML = joined.map(g => `
@@ -133,29 +131,12 @@ function renderDashboard(joined, available) {
       </div>
     `).join("");
   } else {
-    joinedEl.innerHTML = "<p>You haven't joined any games yet.</p>";
-  }
-
-  if (available.length) {
-    availableEl.innerHTML = available.map(g => `
-      <div class="game-card" data-game-id="${g.id}">
-        <strong>${g.name}</strong>
-        <small class="game-status ${g.status}">${g.status}</small>
-        <button class="game-join-btn" data-game-id="${g.id}">Join</button>
-      </div>
-    `).join("");
-  } else {
-    availableEl.innerHTML = "<p>No other games available.</p>";
+    joinedEl.innerHTML = "<p>No games available.</p>";
   }
 
   // Enter game handlers
   document.querySelectorAll(".game-enter-btn").forEach(btn => {
     btn.onclick = () => enterGame(parseInt(btn.dataset.gameId));
-  });
-
-  // Join game handlers
-  document.querySelectorAll(".game-join-btn").forEach(btn => {
-    btn.onclick = () => joinGame(parseInt(btn.dataset.gameId));
   });
 }
 
