@@ -388,6 +388,8 @@ dialog input {
 #game-dashboard h2, #game-dashboard h3 { margin-top: 1rem; }
 .game-card { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; margin-bottom: 0.5rem; border: 1px solid #ddd; border-radius: 8px; background: #f9fafb; }
 .game-card strong { flex: 1; }
+.game-card-logo { height: 40px; width: 40px; object-fit: contain; flex-shrink: 0; }
+.game-card-info { display: flex; flex-direction: column; flex: 1; gap: 0.1rem; }
 .game-status { font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 4px; text-transform: uppercase; }
 .game-status.active { background: #c8e6c9; color: #1B5E20; }
 .game-status.completed { background: #e0e0e0; color: #555; }

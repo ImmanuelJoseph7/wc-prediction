@@ -23,6 +23,58 @@ const CRESTS = {
   "Nottingham Forest FC":"351","Crystal Palace FC":"354","Brighton & Hove Albion FC":"397",
   "Brentford FC":"402","AFC Bournemouth":"bournemouth","Coventry City FC":"1076"
 };
+
+// Official short names and TLAs from football-data.org
+const SHORT_NAMES = {
+  "Arsenal FC":"Arsenal","Aston Villa FC":"Aston Villa","Chelsea FC":"Chelsea",
+  "Everton FC":"Everton","Fulham FC":"Fulham","Liverpool FC":"Liverpool",
+  "Manchester City FC":"Man City","Manchester United FC":"Man United",
+  "Newcastle United FC":"Newcastle","Sunderland AFC":"Sunderland",
+  "Tottenham Hotspur FC":"Tottenham","Hull City AFC":"Hull City",
+  "Leeds United FC":"Leeds United","Ipswich Town FC":"Ipswich Town",
+  "Nottingham Forest FC":"Nottingham","Crystal Palace FC":"Crystal Palace",
+  "Brighton & Hove Albion FC":"Brighton Hove","Brentford FC":"Brentford",
+  "AFC Bournemouth":"Bournemouth","Coventry City FC":"Coventry City"
+};
+const PL_TLA = {
+  "Arsenal FC":"ARS","Aston Villa FC":"AVL","Chelsea FC":"CHE","Everton FC":"EVE",
+  "Fulham FC":"FUL","Liverpool FC":"LIV","Manchester City FC":"MCI",
+  "Manchester United FC":"MUN","Newcastle United FC":"NEW","Sunderland AFC":"SUN",
+  "Tottenham Hotspur FC":"TOT","Hull City AFC":"HUL","Leeds United FC":"LEE",
+  "Ipswich Town FC":"IPS","Nottingham Forest FC":"NOT","Crystal Palace FC":"CRY",
+  "Brighton & Hove Albion FC":"BHA","Brentford FC":"BRE","AFC Bournemouth":"BOU",
+  "Coventry City FC":"COV"
+};
+const shortName = (team) => SHORT_NAMES[team] || team;
+const teamTLA = (team) => TLA[team] || PL_TLA[team] || team;
+
+// Competition logos
+const COMP_LOGOS = {
+  "PL": "https://crests.football-data.org/PL.png",
+  "WC": "https://crests.football-data.org/FIFA_WC.png",
+  "CL": "https://crests.football-data.org/CL.png"
+};
+
+// Short display names for PL clubs
+const SHORT_NAMES = {
+  "Arsenal FC":"Arsenal","Aston Villa FC":"Aston Villa","Chelsea FC":"Chelsea",
+  "Everton FC":"Everton","Fulham FC":"Fulham","Liverpool FC":"Liverpool",
+  "Manchester City FC":"Man City","Manchester United FC":"Man Utd",
+  "Newcastle United FC":"Newcastle","Sunderland AFC":"Sunderland",
+  "Tottenham Hotspur FC":"Spurs","Hull City AFC":"Hull City",
+  "Leeds United FC":"Leeds","Ipswich Town FC":"Ipswich",
+  "Nottingham Forest FC":"Nott'm Forest","Crystal Palace FC":"Crystal Palace",
+  "Brighton & Hove Albion FC":"Brighton","Brentford FC":"Brentford",
+  "AFC Bournemouth":"Bournemouth","Coventry City FC":"Coventry"
+};
+const shortName = (team) => SHORT_NAMES[team] || team;
+
+// Competition logos (football-data.org emblem URLs)
+const COMP_LOGOS = {
+  "PL": "https://crests.football-data.org/PL.png",
+  "WC": "https://crests.football-data.org/FIFA_WC.png",
+  "CL": "https://crests.football-data.org/CL.png"
+};
 const flag = (team) => {
   const code = FLAGS[team];
   if (code) return `<img src="https://flagcdn.com/24x18/${code}.png" alt="${team}" style="vertical-align:middle;margin:0 4px">`;
@@ -126,22 +178,24 @@ function renderDashboard(joined, available) {
   const availableSection = document.getElementById("available-games-section");
 
   joinedEl.innerHTML = joined.length
-    ? joined.map(g => `
-      <div class="game-card" data-game-id="${g.id}">
-        <strong>${g.name}</strong>
-        <small class="game-status ${g.status}">${g.status}</small>
-        <button class="game-enter-btn" data-game-id="${g.id}">Enter</button>
-      </div>`).join("")
+    ? joined.map(g => {
+        const logo = COMP_LOGOS[g.competition_code] ? `<img src="${COMP_LOGOS[g.competition_code]}" alt="${g.name}" class="game-card-logo">` : "";
+        return `<div class="game-card" data-game-id="${g.id}">
+          ${logo}<div class="game-card-info"><strong>${g.name}</strong><small class="game-status ${g.status}">${g.status}</small></div>
+          <button class="game-enter-btn" data-game-id="${g.id}">Enter</button>
+        </div>`;
+      }).join("")
     : "<p>No games yet.</p>";
 
   if (available.length) {
     availableSection.style.display = "";
-    availableEl.innerHTML = available.map(g => `
-      <div class="game-card" data-game-id="${g.id}">
-        <strong>${g.name}</strong>
-        <small class="game-status ${g.status}">${g.status}</small>
+    availableEl.innerHTML = available.map(g => {
+      const logo = COMP_LOGOS[g.competition_code] ? `<img src="${COMP_LOGOS[g.competition_code]}" alt="${g.name}" class="game-card-logo">` : "";
+      return `<div class="game-card" data-game-id="${g.id}">
+        ${logo}<div class="game-card-info"><strong>${g.name}</strong><small class="game-status ${g.status}">${g.status}</small></div>
         <button class="game-join-btn" data-game-id="${g.id}">Join</button>
-      </div>`).join("");
+      </div>`;
+    }).join("");
   } else {
     availableSection.style.display = "none";
   }
@@ -169,6 +223,7 @@ async function enterGame(gameId) {
   activeGameId = gameId;
   activeGame = allGames.find(g => g.id === gameId);
   predictMatchday = null;
+  bdMatchday = null;
   sessionStorage.setItem("activeGameId", gameId);
 
   // Hide dashboard, show game view
@@ -621,7 +676,10 @@ function renderLeaderboard() {
   }
 }
 
+let bdMatchday = null;
+
 function renderBreakdown() {
+  const isLeague = activeGame && activeGame.prediction_window === 'matchday';
   const hasKnockout = activeGame && activeGame.scoring_rules.has_knockout;
   const bdTabs = document.querySelector("#tab-breakdown .lb-tabs");
   if (hasKnockout) { bdTabs.style.display = ""; } else { bdTabs.style.display = "none"; }
@@ -633,6 +691,54 @@ function renderBreakdown() {
   }
   if (!finished.length) { document.getElementById("breakdown-wrap").innerHTML = "<p>No completed matches yet.</p>"; return; }
 
+  // For leagues: paginate by matchday
+  if (isLeague) {
+    const matchdays = [...new Set(finished.filter(m => m.matchday).map(m => m.matchday))].sort((a, b) => b - a);
+    if (bdMatchday === null || !matchdays.includes(bdMatchday)) bdMatchday = matchdays[0];
+    finished = finished.filter(m => m.matchday === bdMatchday);
+    const minMd = matchdays[matchdays.length - 1];
+    const maxMd = matchdays[0];
+
+    const nav = `<div class="matchday-nav" style="margin-bottom:0.75rem">
+      <button class="bd-md-prev" ${bdMatchday >= maxMd ? 'disabled' : ''}>◀ Newer</button>
+      <strong>Matchday ${bdMatchday}</strong>
+      <button class="bd-md-next" ${bdMatchday <= minMd ? 'disabled' : ''}>Older ▶</button>
+    </div>`;
+
+    const bdData = lbCombined;
+    const sorted = [...bdData].sort((a, b) => b.total_points - a.total_points);
+    const initials = sorted.map(u => u.user.split(" ").map(w => w[0]).join(""));
+
+    let html = nav + '<div class="table-wrap"><table class="breakdown-table"><thead><tr><th>Game</th>';
+    html += sorted.map((u, i) => `<th title="${u.user}">${initials[i]}</th>`).join("");
+    html += '</tr></thead><tbody>';
+    for (const m of finished) {
+      html += `<tr><td class="game-cell">${flag(m.home_team)}<span class="abr">${shortName(m.home_team)} ${m.home_score}–${m.away_score} ${shortName(m.away_team)}</span>${flag(m.away_team)}</td>`;
+      for (const u of sorted) {
+        const p = predictions.find(pr => pr.user === u.user && pr.match_id === m.id);
+        if (!p) { html += '<td class="bd-cell bd-none">–</td>'; continue; }
+        const pts = u.match_results?.find(r => r.match_id === m.id)?.points ?? 0;
+        const rules = activeGame ? activeGame.scoring_rules : {};
+        const cls = pts >= (rules.exact_score || 7) ? 'bd-exact' : pts >= (rules.correct_outcome || 2) ? 'bd-correct' : 'bd-wrong';
+        html += `<td class="bd-cell ${cls}">${p.home_score}-${p.away_score}</td>`;
+      }
+      html += '</tr>';
+    }
+    html += '</tbody></table></div>';
+    document.getElementById("breakdown-wrap").innerHTML = html;
+
+    document.querySelector(".bd-md-prev")?.addEventListener("click", () => {
+      const idx = matchdays.indexOf(bdMatchday);
+      if (idx > 0) { bdMatchday = matchdays[idx - 1]; renderBreakdown(); }
+    });
+    document.querySelector(".bd-md-next")?.addEventListener("click", () => {
+      const idx = matchdays.indexOf(bdMatchday);
+      if (idx < matchdays.length - 1) { bdMatchday = matchdays[idx + 1]; renderBreakdown(); }
+    });
+    return;
+  }
+
+  // Cup: existing full-matrix breakdown
   const bdData = hasKnockout ? (bdPhase === "group" ? lbGroup : bdPhase === "knockout" ? lbKnockout : lbCombined) : lbCombined;
   const sorted = [...bdData].sort((a, b) => b.total_points - a.total_points);
   const initials = sorted.map(u => u.user.split(" ").map(w => w[0]).join(""));
@@ -657,40 +763,61 @@ function renderBreakdown() {
 }
 
 function renderResults() {
-  const getWinner = (m) => { if (!m || m.status !== "FINISHED") return null; if (m.pen_winner) return m.pen_winner === "home" ? m.home_team : m.away_team; return m.home_score > m.away_score ? m.home_team : m.away_score > m.home_score ? m.away_team : null; };
+  const isLeague = activeGame && activeGame.prediction_window === 'matchday';
   const finished = matches.filter(m => m.status === "FINISHED").sort((a, b) => b.datetime.localeCompare(a.datetime));
-  const stageOrder = ["FINAL", "THIRD_PLACE", "SEMI_FINALS", "QUARTER_FINALS", "LAST_16", "LAST_32", "GROUP_STAGE"];
-  const stageNames = {"FINAL":"Final","THIRD_PLACE":"Third Place","SEMI_FINALS":"Semi-Finals","QUARTER_FINALS":"Quarter-Finals","LAST_16":"Round of 16","LAST_32":"Round of 32","GROUP_STAGE":"Group Stage"};
-  const grouped = {};
-  for (const m of finished) { (grouped[m.stage] = grouped[m.stage] || []).push(m); }
+  if (!finished.length) { document.getElementById("results-list").innerHTML = "<p>No results yet.</p>"; return; }
+
   let html = "";
-  for (const stage of stageOrder) {
-    if (!grouped[stage]) continue;
-    const open = stage !== "GROUP_STAGE" ? "open" : "";
-    html += `<details class="stage-group" ${open}><summary>${stageNames[stage] || stage} (${grouped[stage].length})</summary>`;
-    for (const m of grouped[stage]) {
-      const homeScoreDisplay = m.pen_home_score != null ? `${m.home_score}(${m.pen_home_score})` : `${m.home_score}`;
-      const awayScoreDisplay = m.pen_away_score != null ? `${m.away_score}(${m.pen_away_score})` : `${m.away_score}`;
-      const penInfo = m.pen_winner ? `<div class="pen-info">${m.pen_winner === "home" ? m.home_team : m.away_team} wins on pens</div>` : "";
-      let nextInfo = "";
-      if (isKnockoutStage(m.stage) && m.stage !== "FINAL" && m.stage !== "THIRD_PLACE") {
-        const pair = BRACKET_PAIRS.find(p => p.includes(m.external_id));
-        if (pair) {
-          const otherId = pair[0] === m.external_id ? pair[1] : pair[0];
-          const other = matches.find(x => x.external_id === otherId);
-          const winner = getWinner(m);
-          const otherWinner = getWinner(other);
-          if (winner) {
-            if (otherWinner) nextInfo = `<div class="next-info">Next: ${flag(winner)} ${winner} vs ${flag(otherWinner)} ${otherWinner}</div>`;
-            else if (other && other.home_team) nextInfo = `<div class="next-info">Next: ${flag(winner)} ${winner} vs ${flag(other.home_team)} ${other.home_team} / ${flag(other.away_team)} ${other.away_team}</div>`;
+
+  if (isLeague) {
+    // Group by matchday descending
+    const matchdays = [...new Set(finished.filter(m => m.matchday).map(m => m.matchday))].sort((a, b) => b - a);
+    for (const md of matchdays) {
+      const mdMatches = finished.filter(m => m.matchday === md).sort((a, b) => a.datetime.localeCompare(b.datetime));
+      html += `<details class="stage-group" ${md === matchdays[0] ? "open" : ""}><summary>Matchday ${md} (${mdMatches.length})</summary>`;
+      for (const m of mdMatches) {
+        const homeScoreDisplay = m.pen_home_score != null ? `${m.home_score}(${m.pen_home_score})` : `${m.home_score}`;
+        const awayScoreDisplay = m.pen_away_score != null ? `${m.away_score}(${m.pen_away_score})` : `${m.away_score}`;
+        html += `<div class="result-card"><span>${flag(m.home_team)} ${shortName(m.home_team)}</span><span class="score">${homeScoreDisplay} – ${awayScoreDisplay}</span><span>${shortName(m.away_team)} ${flag(m.away_team)}</span></div>`;
+      }
+      html += `</details>`;
+    }
+  } else {
+    // Cup: group by stage
+    const getWinner = (m) => { if (!m || m.status !== "FINISHED") return null; if (m.pen_winner) return m.pen_winner === "home" ? m.home_team : m.away_team; return m.home_score > m.away_score ? m.home_team : m.away_score > m.home_score ? m.away_team : null; };
+    const stageOrder = ["FINAL", "THIRD_PLACE", "SEMI_FINALS", "QUARTER_FINALS", "LAST_16", "LAST_32", "GROUP_STAGE"];
+    const stageNames = {"FINAL":"Final","THIRD_PLACE":"Third Place","SEMI_FINALS":"Semi-Finals","QUARTER_FINALS":"Quarter-Finals","LAST_16":"Round of 16","LAST_32":"Round of 32","GROUP_STAGE":"Group Stage"};
+    const grouped = {};
+    for (const m of finished) { (grouped[m.stage] = grouped[m.stage] || []).push(m); }
+    for (const stage of stageOrder) {
+      if (!grouped[stage]) continue;
+      const open = stage !== "GROUP_STAGE" ? "open" : "";
+      html += `<details class="stage-group" ${open}><summary>${stageNames[stage] || stage} (${grouped[stage].length})</summary>`;
+      for (const m of grouped[stage]) {
+        const homeScoreDisplay = m.pen_home_score != null ? `${m.home_score}(${m.pen_home_score})` : `${m.home_score}`;
+        const awayScoreDisplay = m.pen_away_score != null ? `${m.away_score}(${m.pen_away_score})` : `${m.away_score}`;
+        const penInfo = m.pen_winner ? `<div class="pen-info">${m.pen_winner === "home" ? m.home_team : m.away_team} wins on pens</div>` : "";
+        let nextInfo = "";
+        if (isKnockoutStage(m.stage) && m.stage !== "FINAL" && m.stage !== "THIRD_PLACE") {
+          const pair = BRACKET_PAIRS.find(p => p.includes(m.external_id));
+          if (pair) {
+            const otherId = pair[0] === m.external_id ? pair[1] : pair[0];
+            const other = matches.find(x => x.external_id === otherId);
+            const winner = getWinner(m);
+            const otherWinner = getWinner(other);
+            if (winner) {
+              if (otherWinner) nextInfo = `<div class="next-info">Next: ${flag(winner)} ${winner} vs ${flag(otherWinner)} ${otherWinner}</div>`;
+              else if (other && other.home_team) nextInfo = `<div class="next-info">Next: ${flag(winner)} ${winner} vs ${flag(other.home_team)} ${other.home_team} / ${flag(other.away_team)} ${other.away_team}</div>`;
+            }
           }
         }
+        html += `<div class="result-card"><span>${flag(m.home_team)} ${m.home_team}</span><span class="score">${homeScoreDisplay} – ${awayScoreDisplay}</span><span>${m.away_team} ${flag(m.away_team)}</span>${penInfo}${nextInfo}</div>`;
       }
-      html += `<div class="result-card"><span>${flag(m.home_team)} ${m.home_team}</span><span class="score">${homeScoreDisplay} – ${awayScoreDisplay}</span><span>${m.away_team} ${flag(m.away_team)}</span>${penInfo}${nextInfo}</div>`;
+      html += `</details>`;
     }
-    html += `</details>`;
   }
-  document.getElementById("results-list").innerHTML = html || "<p>No results yet.</p>";
+
+  document.getElementById("results-list").innerHTML = html;
 }
 
 // Live countdown ticker
