@@ -412,8 +412,9 @@ dialog input {
 .match-past input { background: #f0f0f0; }
 
 /* League Table */
-.league-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-.league-table th, .league-table td { padding: 0.4rem 0.5rem; text-align: center; border-bottom: 1px solid #eee; }
+.league-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; background: #fff; color: #222; }
+.league-table th, .league-table td { padding: 0.4rem 0.5rem; text-align: center; border-bottom: 1px solid #eee; color: #222; background: transparent; }
 .league-table td.team-name { text-align: left; white-space: nowrap; }
-.league-table thead tr { background: #f5f7fa; font-size: 0.8rem; color: #666; }
-.league-table tbody tr:hover { background: #f9fafb; }
+.league-table thead tr { background: #f5f7fa !important; font-size: 0.8rem; color: #555 !important; }
+.league-table thead th { color: #555 !important; background: #f5f7fa !important; }
+.league-table tbody tr:hover { background: #f9fafb !important; }

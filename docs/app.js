@@ -21,7 +21,7 @@ const CRESTS = {
   "Newcastle United FC":"67","Sunderland AFC":"71","Tottenham Hotspur FC":"73",
   "Hull City AFC":"322","Leeds United FC":"341","Ipswich Town FC":"349",
   "Nottingham Forest FC":"351","Crystal Palace FC":"354","Brighton & Hove Albion FC":"397",
-  "Brentford FC":"402","AFC Bournemouth":"bournemouth","Coventry City FC":"1076"
+  "Brentford FC":"402","AFC Bournemouth":"1044","Coventry City FC":"1076"
 };
 
 // Official short names and TLAs from football-data.org
@@ -33,7 +33,7 @@ const SHORT_NAMES = {
   "Tottenham Hotspur FC":"Tottenham","Hull City AFC":"Hull City",
   "Leeds United FC":"Leeds United","Ipswich Town FC":"Ipswich Town",
   "Nottingham Forest FC":"Nottingham","Crystal Palace FC":"Crystal Palace",
-  "Brighton & Hove Albion FC":"Brighton Hove","Brentford FC":"Brentford",
+  "Brighton & Hove Albion FC":"Brighton","Brentford FC":"Brentford",
   "AFC Bournemouth":"Bournemouth","Coventry City FC":"Coventry City"
 };
 const PL_TLA = {
