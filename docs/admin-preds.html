@@ -24,6 +24,7 @@
     </dialog>
 
     <section id="admin-panel" class="hidden">
+      <div id="game-controls" style="margin-bottom:1rem"></div>
       <select id="game-select"></select>
       <div class="table-wrap" id="preds-wrap"></div>
     </section>
@@ -60,12 +61,40 @@ document.getElementById("login-btn").onclick = async () => {
 };
 
 async function loadGameSelect() {
-  const games = await sb("games", "select=id,name&order=created_at.desc");
+  const games = await sb("games", "select=id,name,joinable&order=created_at.desc");
   const sel = document.getElementById("game-select");
   sel.innerHTML = games.map(g => `<option value="${g.id}">${g.name}</option>`).join("");
   activeGameId = games[0]?.id;
-  sel.onchange = () => { activeGameId = parseInt(sel.value); render(); };
+  sel.onchange = () => { activeGameId = parseInt(sel.value); renderGameControls(games); render(); };
+  renderGameControls(games);
   render();
+}
+
+function renderGameControls(games) {
+  const el = document.getElementById("game-controls");
+  el.innerHTML = games.map(g => `
+    <span style="margin-right:1rem">
+      <strong>${g.name}</strong>:
+      <button class="toggle-join-btn secondary" data-game-id="${g.id}" data-joinable="${g.joinable}" style="padding:0.2rem 0.6rem;font-size:0.85rem">
+        ${g.joinable ? "🔓 Joining open — Lock" : "🔒 Joining locked — Unlock"}
+      </button>
+    </span>
+  `).join("");
+
+  document.querySelectorAll(".toggle-join-btn").forEach(btn => {
+    btn.onclick = async () => {
+      const gameId = parseInt(btn.dataset.gameId);
+      const newVal = btn.dataset.joinable !== "true";
+      await fetch(`${SUPABASE_URL}/rest/v1/games?id=eq.${gameId}`, {
+        method: "PATCH",
+        headers: {...HEADERS, "Content-Type": "application/json", "Prefer": "return=minimal"},
+        body: JSON.stringify({joinable: newVal})
+      });
+      // Refresh
+      const games = await sb("games", "select=id,name,joinable&order=created_at.desc");
+      renderGameControls(games);
+    };
+  });
 }
 
 async function render() {
