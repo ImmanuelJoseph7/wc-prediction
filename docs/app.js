@@ -45,43 +45,6 @@ const PL_TLA = {
   "Brighton & Hove Albion FC":"BHA","Brentford FC":"BRE","AFC Bournemouth":"BOU",
   "Coventry City FC":"COV"
 };
-const shortName = (team) => SHORT_NAMES[team] || team;
-const teamTLA = (team) => TLA[team] || PL_TLA[team] || team;
-
-// Competition logos
-const COMP_LOGOS = {
-  "PL": "https://crests.football-data.org/PL.png",
-  "WC": "https://crests.football-data.org/FIFA_WC.png",
-  "CL": "https://crests.football-data.org/CL.png"
-};
-
-// Short display names for PL clubs
-const SHORT_NAMES = {
-  "Arsenal FC":"Arsenal","Aston Villa FC":"Aston Villa","Chelsea FC":"Chelsea",
-  "Everton FC":"Everton","Fulham FC":"Fulham","Liverpool FC":"Liverpool",
-  "Manchester City FC":"Man City","Manchester United FC":"Man Utd",
-  "Newcastle United FC":"Newcastle","Sunderland AFC":"Sunderland",
-  "Tottenham Hotspur FC":"Spurs","Hull City AFC":"Hull City",
-  "Leeds United FC":"Leeds","Ipswich Town FC":"Ipswich",
-  "Nottingham Forest FC":"Nott'm Forest","Crystal Palace FC":"Crystal Palace",
-  "Brighton & Hove Albion FC":"Brighton","Brentford FC":"Brentford",
-  "AFC Bournemouth":"Bournemouth","Coventry City FC":"Coventry"
-};
-const shortName = (team) => SHORT_NAMES[team] || team;
-
-// Competition logos (football-data.org emblem URLs)
-const COMP_LOGOS = {
-  "PL": "https://crests.football-data.org/PL.png",
-  "WC": "https://crests.football-data.org/FIFA_WC.png",
-  "CL": "https://crests.football-data.org/CL.png"
-};
-const flag = (team) => {
-  const code = FLAGS[team];
-  if (code) return `<img src="https://flagcdn.com/24x18/${code}.png" alt="${team}" style="vertical-align:middle;margin:0 4px">`;
-  const crest = CRESTS[team];
-  if (crest) return `<img src="https://crests.football-data.org/${crest}.png" alt="${team}" style="vertical-align:middle;margin:0 4px;height:18px;width:auto">`;
-  return "";
-};
 
 const TLA = {
   "Algeria":"ALG","Argentina":"ARG","Australia":"AUS","Austria":"AUT","Belgium":"BEL",
@@ -95,6 +58,21 @@ const TLA = {
   "South Africa":"RSA","South Korea":"KOR","Spain":"ESP","Sweden":"SWE",
   "Switzerland":"SUI","Tunisia":"TUN","Turkey":"TUR","United States":"USA",
   "Uruguay":"URU","Uzbekistan":"UZB"
+};
+
+const flag = (team) => {
+  const code = FLAGS[team];
+  if (code) return `<img src="https://flagcdn.com/24x18/${code}.png" alt="${team}" style="vertical-align:middle;margin:0 4px">`;
+  const crest = CRESTS[team];
+  if (crest) return `<img src="https://crests.football-data.org/${crest}.png" alt="${team}" style="vertical-align:middle;margin:0 4px;height:18px;width:auto">`;
+  return "";
+};
+const shortName = (team) => SHORT_NAMES[team] || team;
+const teamTLA = (team) => TLA[team] || PL_TLA[team] || team;
+const COMP_LOGOS = {
+  "PL": "https://crests.football-data.org/PL.png",
+  "WC": "https://crests.football-data.org/FIFA_WC.png",
+  "CL": "https://crests.football-data.org/CL.png"
 };
 
 function teamForm(team) {
