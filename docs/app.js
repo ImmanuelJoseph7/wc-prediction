@@ -472,6 +472,7 @@ function render() {
   renderLeaderboard();
   renderBreakdown();
   renderResults();
+  renderTable();
   renderScoring();
 }
 
@@ -893,6 +894,67 @@ document.getElementById("back-to-dashboard").onclick = (e) => {
   e.preventDefault();
   showDashboard();
 };
+
+function renderTable() {
+  const isLeague = activeGame && activeGame.prediction_window === 'matchday';
+  const tableBtn = document.getElementById("tab-btn-table");
+  tableBtn.style.display = isLeague ? "" : "none";
+  if (!isLeague) return;
+
+  const finished = matches.filter(m => m.status === "FINISHED" && m.home_score !== null);
+  const standings = {};
+
+  // Initialise all teams
+  matches.forEach(m => {
+    if (m.home_team) standings[m.home_team] = standings[m.home_team] || {mp:0,w:0,d:0,l:0,gf:0,ga:0};
+    if (m.away_team) standings[m.away_team] = standings[m.away_team] || {mp:0,w:0,d:0,l:0,gf:0,ga:0};
+  });
+
+  // Compute from finished matches
+  for (const m of finished) {
+    const h = standings[m.home_team];
+    const a = standings[m.away_team];
+    if (!h || !a) continue;
+    h.mp++; a.mp++;
+    h.gf += m.home_score; h.ga += m.away_score;
+    a.gf += m.away_score; a.ga += m.home_score;
+    if (m.home_score > m.away_score)      { h.w++; a.l++; }
+    else if (m.home_score < m.away_score) { h.l++; a.w++; }
+    else                                   { h.d++; a.d++; }
+  }
+
+  const rows = Object.entries(standings).map(([team, s]) => ({
+    team, ...s,
+    gd: s.gf - s.ga,
+    pts: s.w * 3 + s.d
+  })).sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf || a.team.localeCompare(b.team));
+
+  let html = `<table class="league-table">
+    <thead><tr>
+      <th>#</th><th colspan="2">Club</th>
+      <th>MP</th><th>W</th><th>D</th><th>L</th>
+      <th>GF</th><th>GA</th><th>GD</th><th><strong>Pts</strong></th>
+    </tr></thead><tbody>`;
+
+  rows.forEach((r, i) => {
+    const crestId = CRESTS[r.team];
+    const crestHtml = crestId
+      ? `<img src="https://crests.football-data.org/${crestId}.png" alt="" style="height:20px;width:20px;object-fit:contain;vertical-align:middle">`
+      : "";
+    const gdStr = r.gd > 0 ? `+${r.gd}` : `${r.gd}`;
+    html += `<tr>
+      <td>${i + 1}</td>
+      <td style="width:24px">${crestHtml}</td>
+      <td class="team-name">${shortName(r.team)}</td>
+      <td>${r.mp}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td>
+      <td>${r.gf}</td><td>${r.ga}</td><td>${gdStr}</td>
+      <td><strong>${r.pts}</strong></td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  document.getElementById("league-table-wrap").innerHTML = html;
+}
 
 // Dynamic scoring tab
 function renderScoring() {

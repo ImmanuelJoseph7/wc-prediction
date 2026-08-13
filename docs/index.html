@@ -23,6 +23,7 @@
       <button class="tab" data-tab="leaderboard">Leaderboard</button>
       <button class="tab" data-tab="breakdown">Breakdown</button>
       <button class="tab" data-tab="results">Results</button>
+      <button class="tab" data-tab="table" id="tab-btn-table" style="display:none">Table</button>
       <button class="tab" data-tab="scoring">Scoring</button>
     </nav>
 
@@ -103,6 +104,12 @@
       <small class="last-updated" id="last-updated-res"></small>
       <h2>Completed Matches</h2>
       <div id="results-list"></div>
+    </section>
+
+    <!-- Table tab (league games only) -->
+    <section id="tab-table" class="tab-content hidden">
+      <h2>League Table</h2>
+      <div class="table-wrap" id="league-table-wrap"></div>
     </section>
 
     <!-- Scoring tab -->
