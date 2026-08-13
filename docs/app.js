@@ -93,12 +93,7 @@ async function sb(table, query = "") {
   return r.json();
 }
 
-async function populateUserSelect() {
-  users = await sb("users", "select=name,pin_hash");
-  const sel = document.getElementById("user-select");
-  sel.innerHTML = '<option value="">Pick your name…</option>';
-  users.forEach(u => { sel.innerHTML += `<option>${u.name}</option>`; });
-}
+// No populateUserSelect needed — login uses a text input for username
 
 function showSignedIn() {
   const el = document.getElementById("signed-in-as");
@@ -210,7 +205,7 @@ function showDashboard() {
 (async () => {
   if (currentUser && currentPin) {
     document.getElementById("login-dialog").close();
-    if (currentUser === "Immanuel J") document.getElementById("admin-link").style.display = "block";
+    if (currentUser === "ImmanuelJ") document.getElementById("admin-link").style.display = "block";
     showSignedIn();
 
     // If user has an active game, go straight to it; otherwise show dashboard
@@ -231,8 +226,6 @@ function showDashboard() {
       await loadGames();
       document.getElementById("game-dashboard").classList.remove("hidden");
     }
-  } else {
-    await populateUserSelect();
   }
 })();
 
@@ -240,7 +233,7 @@ async function loadData() {
   const [m, p, u, gu] = await Promise.all([
     sb("matches_v2", `game_id=eq.${activeGameId}&select=*&order=kickoff.asc`),
     sb("predictions_v2", `game_id=eq.${activeGameId}&select=*`),
-    sb("users", "select=name,pin_hash"),
+    sb("users", "select=name,username,pin_hash"),
     sb("game_users", `game_id=eq.${activeGameId}&select=user_name`),
   ]);
   matches = m.map(r => ({id: r.id, external_id: r.external_id, home_team: r.home_team, away_team: r.away_team, group: r.group_name, stage: r.stage, matchday: r.matchday, datetime: r.kickoff, status: r.status, home_score: r.home_score, away_score: r.away_score, pen_winner: r.pen_winner, pen_home_score: r.pen_home_score, pen_away_score: r.pen_away_score}));
@@ -321,23 +314,23 @@ async function hashPin(pin) {
 }
 
 document.getElementById("login-btn").onclick = async () => {
-  const name = document.getElementById("user-select").value;
+  const username = document.getElementById("user-username").value.trim();
   const pin = document.getElementById("pin-input").value;
   const err = document.getElementById("login-error");
-  if (!name || pin.length !== 4) { err.textContent = "Pick a name and enter 4-digit PIN."; return; }
+  if (!username || pin.length !== 4) { err.textContent = "Enter your username and 4-digit PIN."; return; }
 
   const hash = await hashPin(pin);
-  users = await sb("users", "select=name,pin_hash");
-  const existing = users.find(u => u.name === name);
-  if (!existing) { err.textContent = "User not found."; return; }
+  const result = await sb("users", `username=eq.${encodeURIComponent(username)}&select=name,username,pin_hash`);
+  if (!result.length) { err.textContent = "Username not found."; return; }
+  const existing = result[0];
   if (existing.pin_hash !== hash) { err.textContent = "Wrong PIN."; return; }
 
-  currentUser = name;
+  currentUser = existing.name;
   currentPin = pin;
-  sessionStorage.setItem("wc_user", name);
+  sessionStorage.setItem("wc_user", existing.name);
   sessionStorage.setItem("wc_pin", pin);
   document.getElementById("login-dialog").close();
-  if (name === "Immanuel J") document.getElementById("admin-link").style.display = "block";
+  if (existing.username === "ImmanuelJ") document.getElementById("admin-link").style.display = "block";
   showSignedIn();
 
   // Show game dashboard
@@ -350,6 +343,7 @@ document.getElementById("login-btn").onclick = async () => {
 // Registration
 document.getElementById("register-btn").onclick = async () => {
   const btn = document.getElementById("register-btn");
+  const username = document.getElementById("reg-username").value.trim();
   const name = document.getElementById("reg-name").value.trim();
   const pin = document.getElementById("reg-pin").value;
   const confirm = document.getElementById("reg-pin-confirm").value;
@@ -357,10 +351,14 @@ document.getElementById("register-btn").onclick = async () => {
   const success = document.getElementById("reg-success");
   err.textContent = ""; success.textContent = "";
 
-  if (!/^[A-Z][a-z]+ [A-Z]$/.test(name)) { err.textContent = "Format: First Name + Last Initial (e.g. Samuel G)"; return; }
+  if (!/^[A-Z][a-z]+[A-Z]$/.test(username)) { err.textContent = "Username format: FirstnameI (e.g. SamuelG) — no spaces."; return; }
+  if (!/^[A-Z][a-z]+ [A-Z]$/.test(name)) { err.textContent = "Display name format: Firstname I (e.g. Samuel G)."; return; }
   if (!/^\d{4}$/.test(pin)) { err.textContent = "PIN must be exactly 4 digits."; return; }
   if (pin !== confirm) { err.textContent = "PINs don't match."; return; }
-  if (users.find(u => u.name === name)) { err.textContent = "Name already taken."; return; }
+
+  // Check username not taken
+  const existing = await sb("users", `username=eq.${encodeURIComponent(username)}&select=username`);
+  if (existing.length) { err.textContent = "Username already taken."; return; }
 
   btn.disabled = true;
   btn.textContent = "Registering…";
@@ -368,11 +366,10 @@ document.getElementById("register-btn").onclick = async () => {
 
   const resp = await fetch(`${SUPABASE_URL}/rest/v1/users`, {
     method: "POST", headers: {...HEADERS, "Content-Type": "application/json", "Prefer": "return=minimal"},
-    body: JSON.stringify({name, pin_hash: hash})
+    body: JSON.stringify({name, username, pin_hash: hash})
   });
   if (resp.ok) {
-    success.textContent = "✓ Registered! Select your name above to login.";
-    await populateUserSelect();
+    success.textContent = "✓ Registered! Enter your username above to login.";
   } else {
     err.textContent = `Error: ${resp.status}`;
   }
