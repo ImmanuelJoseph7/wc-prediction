@@ -914,24 +914,70 @@ function renderTable() {
       <th>GF</th><th>GA</th><th>GD</th><th><strong>Pts</strong></th>
     </tr></thead><tbody>`;
 
+  const colCount = 11;
+
   rows.forEach((r, i) => {
     const crestId = CRESTS[r.team];
     const crestHtml = crestId
       ? `<img src="https://crests.football-data.org/${crestId}.png" alt="${shortName(r.team)}" style="height:18px;width:auto;vertical-align:middle">`
       : "";
     const gdStr = r.gd > 0 ? `+${r.gd}` : `${r.gd}`;
-    html += `<tr>
+    const teamKey = r.team.replace(/[^a-z0-9]/gi, "_");
+    html += `<tr class="league-row" data-team="${r.team}" style="cursor:pointer">
       <td>${i + 1}</td>
       <td style="width:24px">${crestHtml}</td>
-      <td class="team-name">${shortName(r.team)}</td>
+      <td class="team-name">${shortName(r.team)} <small class="expand-hint">▸</small></td>
       <td>${r.mp}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td>
       <td>${r.gf}</td><td>${r.ga}</td><td>${gdStr}</td>
       <td><strong>${r.pts}</strong></td>
+    </tr>
+    <tr class="team-results-row hidden" id="results-${teamKey}">
+      <td colspan="${colCount}" class="team-results-cell">
+        ${buildTeamResults(r.team, finished)}
+      </td>
     </tr>`;
   });
 
   html += '</tbody></table>';
   document.getElementById("league-table-wrap").innerHTML = html;
+
+  // Click to expand/collapse team results
+  document.querySelectorAll(".league-row").forEach(row => {
+    row.onclick = () => {
+      const team = row.dataset.team;
+      const teamKey = team.replace(/[^a-z0-9]/gi, "_");
+      const resultsRow = document.getElementById(`results-${teamKey}`);
+      const hint = row.querySelector(".expand-hint");
+      const isHidden = resultsRow.classList.contains("hidden");
+      resultsRow.classList.toggle("hidden", !isHidden);
+      if (hint) hint.textContent = isHidden ? "▾" : "▸";
+    };
+  });
+}
+
+function buildTeamResults(team, finished) {
+  const teamMatches = finished
+    .filter(m => m.home_team === team || m.away_team === team)
+    .sort((a, b) => b.datetime.localeCompare(a.datetime));
+
+  if (!teamMatches.length) return '<p style="margin:0.5rem 0;color:#888;font-size:0.85rem">No results yet.</p>';
+
+  return teamMatches.map(m => {
+    const isHome = m.home_team === team;
+    const opp = isHome ? m.away_team : m.home_team;
+    const gf = isHome ? m.home_score : m.away_score;
+    const ga = isHome ? m.away_score : m.home_score;
+    const cls = gf > ga ? 'tr-win' : gf < ga ? 'tr-loss' : 'tr-draw';
+    const label = gf > ga ? 'W' : gf < ga ? 'L' : 'D';
+    const scoreStr = isHome ? `${gf}–${ga}` : `${ga}–${gf}`;
+    const oppCrest = flag(opp);
+    return `<div class="team-result-row">
+      <span class="tr-badge ${cls}">${label}</span>
+      <span class="tr-score">${scoreStr}</span>
+      <span class="tr-opp">${oppCrest} ${shortName(opp)}</span>
+      <span class="tr-md">MD${m.matchday}</span>
+    </div>`;
+  }).join("");
 }
 
 // Dynamic scoring tab

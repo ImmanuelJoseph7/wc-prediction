@@ -418,3 +418,17 @@ dialog input {
 .league-table thead tr { background: #f5f7fa !important; font-size: 0.8rem; color: #555 !important; }
 .league-table thead th { color: #555 !important; background: #f5f7fa !important; }
 .league-table tbody tr:hover { background: #f9fafb !important; }
+
+/* League table inline team results */
+.league-row:hover { background: #f0f4f8 !important; }
+.expand-hint { color: #aaa; font-size: 0.75rem; }
+.team-results-row td { padding: 0.5rem 1rem 0.75rem 2rem !important; background: #f9fafb !important; }
+.team-result-row { display: flex; align-items: center; gap: 0.6rem; padding: 0.2rem 0; font-size: 0.85rem; border-bottom: 1px solid #eee; }
+.team-result-row:last-child { border-bottom: none; }
+.tr-badge { display: inline-block; width: 1.4rem; text-align: center; font-weight: 700; font-size: 0.8rem; border-radius: 3px; padding: 0.1rem 0; }
+.tr-win { background: #d4edda; color: #155724; }
+.tr-loss { background: #f8d7da; color: #721c24; }
+.tr-draw { background: #e2e3e5; color: #383d41; }
+.tr-score { font-weight: 600; min-width: 2.5rem; }
+.tr-opp { flex: 1; }
+.tr-md { color: #999; font-size: 0.78rem; white-space: nowrap; }
