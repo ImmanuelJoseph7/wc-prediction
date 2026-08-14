@@ -570,11 +570,11 @@ function renderMatchCards(matchList, now) {
     return `<div class="match-card ${isPast ? 'match-past' : ''}" data-id="${m.id}">
       <div class="match-time"><strong>${dt}</strong></div>
       <div class="score-row">
-        <span class="team home">${m.home_team} ${flag(m.home_team)}</span>
+        <span class="team home">${shortName(m.home_team)} ${flag(m.home_team)}</span>
         <input type="number" min="0" max="20" class="home-score" value="${hVal}" ${disabled}>
         <span class="vs">–</span>
         <input type="number" min="0" max="20" class="away-score" value="${aVal}" ${disabled}>
-        <span class="team away">${flag(m.away_team)} ${m.away_team}</span>
+        <span class="team away">${flag(m.away_team)} ${shortName(m.away_team)}</span>
       </div>
       ${penHtml}
       ${bracketInfo}
@@ -917,7 +917,7 @@ function renderTable() {
   rows.forEach((r, i) => {
     const crestId = CRESTS[r.team];
     const crestHtml = crestId
-      ? `<img src="https://crests.football-data.org/${crestId}.png" alt="" style="height:20px;width:20px;object-fit:contain;vertical-align:middle">`
+      ? `<img src="https://crests.football-data.org/${crestId}.png" alt="${shortName(r.team)}" style="height:18px;width:auto;vertical-align:middle">`
       : "";
     const gdStr = r.gd > 0 ? `+${r.gd}` : `${r.gd}`;
     html += `<tr>
