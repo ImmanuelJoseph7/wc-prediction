@@ -21,7 +21,7 @@ const CRESTS = {
   "Newcastle United FC":"67","Sunderland AFC":"71","Tottenham Hotspur FC":"73",
   "Hull City AFC":"322","Leeds United FC":"341","Ipswich Town FC":"349",
   "Nottingham Forest FC":"351","Crystal Palace FC":"354","Brighton & Hove Albion FC":"397",
-  "Brentford FC":"402","AFC Bournemouth":"1044","Coventry City FC":"1076"
+  "Brentford FC":"402","AFC Bournemouth":"bournemouth","Coventry City FC":"1076"
 };
 
 // Official short names and TLAs from football-data.org
@@ -64,7 +64,7 @@ const flag = (team) => {
   const code = FLAGS[team];
   if (code) return `<img src="https://flagcdn.com/24x18/${code}.png" alt="${team}" style="vertical-align:middle;margin:0 4px">`;
   const crest = CRESTS[team];
-  if (crest) return `<img src="https://crests.football-data.org/${crest}.png" alt="${team}" style="vertical-align:middle;margin:0 4px;height:18px;width:18px;object-fit:contain">`;
+  if (crest) return `<img src="https://crests.football-data.org/${crest}.png" alt="${team}" width="18" height="18" style="vertical-align:middle;margin:0 4px">`;
   return "";
 };
 const shortName = (team) => SHORT_NAMES[team] || team;
@@ -919,7 +919,7 @@ function renderTable() {
   rows.forEach((r, i) => {
     const crestId = CRESTS[r.team];
     const crestHtml = crestId
-      ? `<img src="https://crests.football-data.org/${crestId}.png" alt="${shortName(r.team)}" style="height:20px;width:20px;object-fit:contain;vertical-align:middle">`
+      ? `<img src="https://crests.football-data.org/${crestId}.png" alt="${shortName(r.team)}" width="20" height="20" style="vertical-align:middle">`
       : "";
     const gdStr = r.gd > 0 ? `+${r.gd}` : `${r.gd}`;
     const teamKey = r.team.replace(/[^a-z0-9]/gi, "_");
