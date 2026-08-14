@@ -233,7 +233,7 @@ function showDashboard() {
 (async () => {
   if (currentUser && currentPin) {
     document.getElementById("login-dialog").close();
-    if (currentUser === "ImmanuelJ") document.getElementById("admin-link").style.display = "block";
+    if (currentUser === "Immanuel J") document.getElementById("admin-link").style.display = "block";
     showSignedIn();
 
     // If user has an active game, go straight to it; otherwise show dashboard
