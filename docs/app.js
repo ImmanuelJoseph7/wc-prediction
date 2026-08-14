@@ -64,7 +64,7 @@ const flag = (team) => {
   const code = FLAGS[team];
   if (code) return `<img src="https://flagcdn.com/24x18/${code}.png" alt="${team}" style="vertical-align:middle;margin:0 4px">`;
   const crest = CRESTS[team];
-  if (crest) return `<img src="https://crests.football-data.org/${crest}.png" alt="${team}" style="vertical-align:middle;margin:0 4px;height:18px;width:auto">`;
+  if (crest) return `<img src="https://crests.football-data.org/${crest}.png" alt="${team}" style="vertical-align:middle;margin:0 4px;height:18px;width:18px;object-fit:contain">`;
   return "";
 };
 const shortName = (team) => SHORT_NAMES[team] || team;
@@ -919,7 +919,7 @@ function renderTable() {
   rows.forEach((r, i) => {
     const crestId = CRESTS[r.team];
     const crestHtml = crestId
-      ? `<img src="https://crests.football-data.org/${crestId}.png" alt="${shortName(r.team)}" style="height:18px;width:auto;vertical-align:middle">`
+      ? `<img src="https://crests.football-data.org/${crestId}.png" alt="${shortName(r.team)}" style="height:20px;width:20px;object-fit:contain;vertical-align:middle">`
       : "";
     const gdStr = r.gd > 0 ? `+${r.gd}` : `${r.gd}`;
     const teamKey = r.team.replace(/[^a-z0-9]/gi, "_");
