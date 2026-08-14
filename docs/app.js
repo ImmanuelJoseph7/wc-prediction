@@ -919,8 +919,8 @@ function renderTable() {
   rows.forEach((r, i) => {
     const crestId = CRESTS[r.team];
     const crestHtml = crestId
-      ? `<img src="https://crests.football-data.org/${crestId}.png" alt="${shortName(r.team)}" width="20" height="20" style="vertical-align:middle">`
-      : "";
+      ? `<div style="width:24px;height:24px;background:url('https://crests.football-data.org/${crestId}.png') center/contain no-repeat;display:inline-block;vertical-align:middle"></div>`
+      : `<div style="width:24px;height:24px;display:inline-block"></div>`;
     const gdStr = r.gd > 0 ? `+${r.gd}` : `${r.gd}`;
     const teamKey = r.team.replace(/[^a-z0-9]/gi, "_");
     html += `<tr class="league-row" data-team="${r.team}" style="cursor:pointer">
