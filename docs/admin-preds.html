@@ -98,37 +98,71 @@ function renderGameControls(games) {
 }
 
 async function render() {
-  const [matchesRaw, predsRaw, usersRaw] = await Promise.all([
+  const [matchesRaw, predsRaw, usersRaw, gameUsersRaw, gamesRaw] = await Promise.all([
     sb("matches_v2", `game_id=eq.${activeGameId}&select=*&order=kickoff.asc`),
     sb("predictions_v2", `game_id=eq.${activeGameId}&select=*`),
-    sb("users", "select=name")
+    sb("users", "select=name"),
+    sb("game_users", `game_id=eq.${activeGameId}&select=user_name`),
+    sb("games", `id=eq.${activeGameId}&select=prediction_window`)
   ]);
-  const matches = matchesRaw.map(r => ({id: r.id, external_id: r.external_id, home_team: r.home_team, away_team: r.away_team, datetime: r.kickoff, status: r.status}));
+
+  const matches = matchesRaw.map(r => ({id: r.id, external_id: r.external_id, home_team: r.home_team, away_team: r.away_team, datetime: r.kickoff, status: r.status, matchday: r.matchday}));
   const predictions = predsRaw.map(r => ({user: r.user_name, match_id: r.match_id, home_score: r.home_score, away_score: r.away_score, pen_winner: r.pen_winner}));
+  const memberNames = new Set(gameUsersRaw.map(g => g.user_name));
+  const isLeague = gamesRaw[0]?.prediction_window === 'matchday';
 
   const upcoming = matches.filter(m => m.status !== "FINISHED").sort((a, b) => a.datetime.localeCompare(b.datetime));
   if (!upcoming.length) { document.getElementById("preds-wrap").innerHTML = "<p>No upcoming matches.</p>"; return; }
 
-  const users = usersRaw.map(u => u.name).sort();
+  // Only show members of this game, sorted
+  const users = usersRaw.map(u => u.name).filter(n => memberNames.has(n)).sort();
   const initials = users.map(u => u.split(" ").map(w => w[0]).join(""));
 
-  let html = '<table class="breakdown-table"><thead><tr><th>Match</th>';
-  html += users.map((u, i) => `<th title="${u}">${initials[i]}</th>`).join("");
-  html += '</tr></thead><tbody>';
+  let html = '';
 
-  for (const m of upcoming) {
-    const dt = new Date(m.datetime).toLocaleDateString([], { day: 'numeric', month: 'short' });
-    html += `<tr><td class="game-cell">${flag(m.home_team)}<span class="abr"> v </span>${flag(m.away_team)} <small>${dt}</small></td>`;
-    for (const u of users) {
-      const p = predictions.find(pr => pr.user === u && pr.match_id === m.id);
-      if (!p) { html += '<td class="bd-cell bd-none">–</td>'; continue; }
-      const penLabel = p.pen_winner ? ` ${flag(p.pen_winner === "home" ? m.home_team : m.away_team)}` : "";
-      html += `<td class="bd-cell">${p.home_score}-${p.away_score}${penLabel}</td>`;
+  if (isLeague) {
+    // Group by matchday, show next 3 matchdays
+    const matchdays = [...new Set(upcoming.filter(m => m.matchday).map(m => m.matchday))].sort((a, b) => a - b).slice(0, 3);
+    for (const md of matchdays) {
+      const mdMatches = upcoming.filter(m => m.matchday === md);
+      html += `<h3 style="margin-top:1.5rem">Matchday ${md}</h3>`;
+      html += '<div class="table-wrap"><table class="breakdown-table"><thead><tr><th>Match</th>';
+      html += initials.map((ini, i) => `<th title="${users[i]}">${ini}</th>`).join("");
+      html += '</tr></thead><tbody>';
+      for (const m of mdMatches) {
+        const dt = new Date(m.datetime).toLocaleDateString([], { day: 'numeric', month: 'short' });
+        const homeShort = m.home_team ? m.home_team.replace(/ FC$| AFC$/, '') : '?';
+        const awayShort = m.away_team ? m.away_team.replace(/ FC$| AFC$/, '') : '?';
+        html += `<tr><td class="game-cell"><span class="abr">${homeShort} v ${awayShort}</span> <small>${dt}</small></td>`;
+        for (const u of users) {
+          const p = predictions.find(pr => pr.user === u && pr.match_id === m.id);
+          if (!p) { html += '<td class="bd-cell bd-none">–</td>'; continue; }
+          html += `<td class="bd-cell">${p.home_score}-${p.away_score}</td>`;
+        }
+        html += '</tr>';
+      }
+      html += '</tbody></table></div>';
     }
-    html += '</tr>';
+  } else {
+    // Cup: show all upcoming
+    html += '<table class="breakdown-table"><thead><tr><th>Match</th>';
+    html += initials.map((ini, i) => `<th title="${users[i]}">${ini}</th>`).join("");
+    html += '</tr></thead><tbody>';
+    for (const m of upcoming) {
+      const dt = new Date(m.datetime).toLocaleDateString([], { day: 'numeric', month: 'short' });
+      html += `<tr><td class="game-cell">${flag(m.home_team)}<span class="abr"> v </span>${flag(m.away_team)} <small>${dt}</small></td>`;
+      for (const u of users) {
+        const p = predictions.find(pr => pr.user === u && pr.match_id === m.id);
+        if (!p) { html += '<td class="bd-cell bd-none">–</td>'; continue; }
+        const penLabel = p.pen_winner ? ` ${flag(p.pen_winner === "home" ? m.home_team : m.away_team)}` : "";
+        html += `<td class="bd-cell">${p.home_score}-${p.away_score}${penLabel}</td>`;
+      }
+      html += '</tr>';
+    }
+    html += '</tbody></table>';
   }
-  html += '</tbody></table>';
-  document.getElementById("preds-wrap").innerHTML = html;
+
+  document.getElementById("preds-wrap").innerHTML = html || "<p>No upcoming matches.</p>";
 }
   </script>
 </body>
