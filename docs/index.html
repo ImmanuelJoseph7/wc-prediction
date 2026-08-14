@@ -31,17 +31,17 @@
     <dialog id="login-dialog" open>
       <article>
         <h2>Who are you?</h2>
-        <small style="display:block;margin-bottom:0.5rem">Enter your username — first name + last initial, no space (e.g. <strong>SamuelG</strong>)</small>
-        <input type="text" id="user-username" placeholder="Username (e.g. SamuelG)" maxlength="30" autocomplete="username" autocapitalize="none">
+        <small style="display:block;margin-bottom:0.5rem">Enter your username — first name + last initial, no space (e.g. <strong>JohnS</strong>)</small>
+        <input type="text" id="user-username" placeholder="Username (e.g. JohnS)" maxlength="30" autocomplete="username" autocapitalize="none">
         <input type="password" id="pin-input" placeholder="4-digit PIN" maxlength="4" pattern="\d{4}">
         <button id="login-btn">Enter</button>
         <small id="login-error" class="error"></small>
         <hr>
         <details id="register-section">
           <summary>New player? Register here</summary>
-          <small>Username: First Name + Last Initial, no space (e.g. <strong>SamuelG</strong>)<br>Display name: First Name + Last Initial with space (e.g. <strong>Samuel G</strong>)<br>PIN: 4 digits</small>
-          <input type="text" id="reg-username" placeholder="Username (e.g. SamuelG)" maxlength="30" autocomplete="username" autocapitalize="none">
-          <input type="text" id="reg-name" placeholder="Display name (e.g. Samuel G)" maxlength="20">
+          <small>Username: First Name + Last Initial, no space (e.g. <strong>JohnS</strong>)<br>Display name: First Name + Last Initial with space (e.g. <strong>John S</strong>)<br>PIN: 4 digits</small>
+          <input type="text" id="reg-username" placeholder="Username (e.g. JohnS)" maxlength="30" autocomplete="username" autocapitalize="none">
+          <input type="text" id="reg-name" placeholder="Display name (e.g. John S)" maxlength="20">
           <input type="password" id="reg-pin" placeholder="4-digit PIN" maxlength="4" pattern="\d{4}">
           <input type="password" id="reg-pin-confirm" placeholder="Confirm PIN" maxlength="4" pattern="\d{4}">
           <button id="register-btn">Register</button>
