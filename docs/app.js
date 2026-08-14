@@ -905,7 +905,7 @@ function renderTable() {
     team, ...s,
     gd: s.gf - s.ga,
     pts: s.w * 3 + s.d
-  })).sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf || a.team.localeCompare(b.team));
+  })).sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf || shortName(a.team).localeCompare(shortName(b.team)));
 
   let html = `<table class="league-table">
     <thead><tr>
