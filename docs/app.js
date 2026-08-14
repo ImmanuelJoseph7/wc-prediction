@@ -71,7 +71,7 @@ const shortName = (team) => SHORT_NAMES[team] || team;
 const teamTLA = (team) => TLA[team] || PL_TLA[team] || team;
 const COMP_LOGOS = {
   "PL": "https://crests.football-data.org/PL.png",
-  "WC": "https://crests.football-data.org/FIFA_WC.png",
+  "WC": "https://crests.football-data.org/wm26.png",
   "CL": "https://crests.football-data.org/CL.png"
 };
 
