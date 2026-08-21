@@ -466,10 +466,18 @@ function renderPredict() {
     // Find the next matchday that has unfinished matches
     if (predictMatchday === null) {
       const matchdays = [...new Set(matches.filter(m => m.matchday).map(m => m.matchday))].sort((a, b) => a - b);
-      predictMatchday = matchdays.find(md => matches.some(m => m.matchday === md && m.status !== "FINISHED")) || matchdays[matchdays.length - 1] || 1;
+      // Pick the matchday that has started (first kickoff <= now) but isn't fully finished
+      const active = matchdays.find(md => {
+        const mdGames = matches.filter(m => m.matchday === md);
+        const firstKickoff = new Date(Math.min(...mdGames.map(m => new Date(m.datetime))));
+        return firstKickoff <= now && mdGames.some(m => m.status !== "FINISHED");
+      });
+      // Fall back to next upcoming matchday, then last matchday
+      const upcoming = matchdays.find(md => matches.some(m => m.matchday === md && (m.status === "SCHEDULED" || m.status === "TIMED")));
+      predictMatchday = active || upcoming || matchdays[matchdays.length - 1] || 1;
     }
 
-    const mdMatches = matches.filter(m => m.matchday === predictMatchday && m.home_team && m.away_team);
+    const mdMatches = matches.filter(m => m.matchday === predictMatchday && m.home_team && m.away_team && m.status !== "FINISHED");
     const maxMatchday = Math.max(...matches.filter(m => m.matchday).map(m => m.matchday));
     const minMatchday = Math.min(...matches.filter(m => m.matchday).map(m => m.matchday));
 
