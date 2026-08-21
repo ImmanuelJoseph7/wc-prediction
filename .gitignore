@@ -3,3 +3,4 @@ scripts/check_scores.py
 *.pyc
 .env
 scripts/check_api.ps1
+docs/PLATFORM_SPEC.md

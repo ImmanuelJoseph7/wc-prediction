@@ -484,8 +484,13 @@ function renderPredict() {
       container.innerHTML = navHtml + "<p>No matches for this matchday.</p>";
     } else {
       upcoming = mdMatches.sort((a, b) => a.datetime.localeCompare(b.datetime));
-      container.innerHTML = navHtml + renderMatchCards(upcoming, now);
-      document.getElementById("submit-preds").disabled = false;
+      const firstKickoff = new Date(upcoming[0].datetime);
+      const matchdayLocked = now >= firstKickoff;
+      const lockedBanner = matchdayLocked
+        ? `<p class="matchday-locked-msg">🔒 Predictions are locked — matchday ${predictMatchday} has started.</p>`
+        : "";
+      container.innerHTML = navHtml + lockedBanner + renderMatchCards(upcoming, now, matchdayLocked);
+      document.getElementById("submit-preds").disabled = matchdayLocked;
     }
 
     // Nav handlers
@@ -529,7 +534,7 @@ function renderPredict() {
   });
 }
 
-function renderMatchCards(matchList, now) {
+function renderMatchCards(matchList, now, forceDisabled = false) {
   const hasKnockout = activeGame && activeGame.scoring_rules.has_knockout;
   return matchList.map(m => {
     const existing = predictions.find(p => p.user === currentUser && p.match_id === m.id);
@@ -537,7 +542,7 @@ function renderMatchCards(matchList, now) {
     const aVal = existing ? existing.away_score : "";
     const dt = new Date(m.datetime).toLocaleString([], { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
     const diff = new Date(m.datetime) - now;
-    const isPast = diff <= 0;
+    const isPast = forceDisabled || diff <= 0;
     const d = Math.floor(diff / 86400000);
     const h = Math.floor((diff % 86400000) / 3600000);
     const min = Math.floor((diff % 3600000) / 60000);
