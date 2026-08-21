@@ -478,6 +478,7 @@ function renderPredict() {
     }
 
     const mdMatches = matches.filter(m => m.matchday === predictMatchday && m.home_team && m.away_team && m.status !== "FINISHED");
+    const allMdMatches = matches.filter(m => m.matchday === predictMatchday && m.home_team && m.away_team);
     const maxMatchday = Math.max(...matches.filter(m => m.matchday).map(m => m.matchday));
     const minMatchday = Math.min(...matches.filter(m => m.matchday).map(m => m.matchday));
 
@@ -492,7 +493,7 @@ function renderPredict() {
       container.innerHTML = navHtml + "<p>No matches for this matchday.</p>";
     } else {
       upcoming = mdMatches.sort((a, b) => a.datetime.localeCompare(b.datetime));
-      const firstKickoff = new Date(upcoming[0].datetime);
+      const firstKickoff = new Date(allMdMatches.sort((a, b) => a.datetime.localeCompare(b.datetime))[0].datetime);
       const matchdayLocked = now >= firstKickoff;
       const lockedBanner = matchdayLocked
         ? `<p class="matchday-locked-msg">🔒 Predictions are locked — matchday ${predictMatchday} has started.</p>`
